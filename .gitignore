@@ -1,0 +1,26 @@
+# Secrets — NEVER commit
+.env
+.env.*
+!.env.example
+auth.json
+auth.lock
+config.yaml
+*.key
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.bak
+*.bak.*
+.venv/
+venv/
+
+# Node (frontend source builds here; dist/ IS committed)
+node_modules/
+frontend/node_modules/
+
+# Runtime state
+*.log
+.sessions.json
