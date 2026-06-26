@@ -1488,6 +1488,7 @@ const _THEMES=[
 ];
 const _SKINS=[
   {name:'Default',  colors:['#FFD700','#FFBF00','#CD7F32']},
+  {name:'Nothing',  value:'nothing', colors:['#f7f7f2','#0b0b0b','#ff0033']},
   {name:'Ares',     colors:['#FF4444','#CC3333','#992222']},
   {name:'Mono',     colors:['#CCCCCC','#999999','#666666']},
   {name:'Graphite', colors:['#FFFFFF','#D6D6D6','#242424']},
@@ -1520,7 +1521,7 @@ function _normalizeAppearance(theme,skin){
   const rawSkin=typeof skin==='string'?skin.trim().toLowerCase():'';
   const legacy=_LEGACY_THEME_MAP[rawTheme];
   const nextTheme=legacy?legacy.theme:(_VALID_THEMES.has(rawTheme)?rawTheme:'dark');
-  const nextSkin=_VALID_SKINS.has(rawSkin)?rawSkin:(legacy?legacy.skin:'default');
+  const nextSkin=_VALID_SKINS.has(rawSkin)?rawSkin:(legacy?legacy.skin:'nothing');
   return {theme:nextTheme,skin:nextSkin};
 }
 

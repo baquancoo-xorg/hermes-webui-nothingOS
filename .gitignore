@@ -24,3 +24,6 @@ frontend/node_modules/
 # Runtime state
 *.log
 .sessions.json
+
+# Local QA artifacts
+qa-artifacts/

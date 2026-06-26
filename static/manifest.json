@@ -7,8 +7,8 @@
   "scope": "./",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
-  "background_color": "#0D0D1A",
-  "theme_color": "#0D0D1A",
+  "background_color": "#090909",
+  "theme_color": "#090909",
   "orientation": "portrait-primary",
   "categories": ["productivity", "utilities"],
   "shortcuts": [
