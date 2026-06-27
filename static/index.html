@@ -17,15 +17,15 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Hermes">
 <link rel="apple-touch-icon" sizes="512x512" href="static/apple-touch-icon.png">
-<!-- Single-skin fork: lock pre-paint appearance to NothingOS dark. Overwrites any
-     stale localStorage so old theme/skin values cannot flash or persist. -->
-<script>(function(){try{localStorage.setItem('hermes-theme','dark');localStorage.setItem('hermes-skin','nothingos');document.documentElement.classList.add('dark');document.documentElement.dataset.skin='nothingos';}catch(e){document.documentElement.classList.add('dark');}})()</script>
+<!-- Single-skin fork: lock skin to nothingos; honour light/dark theme (default dark).
+     Runs before paint to avoid a flash. Overwrites stale skin so old values can't persist. -->
+<script>(function(){try{var t=(localStorage.getItem('hermes-theme')||'dark').toLowerCase();t=(t==='light')?'light':'dark';localStorage.setItem('hermes-theme',t);localStorage.setItem('hermes-skin','nothingos');var r=document.documentElement;r.classList.add(t);r.classList.toggle('dark',t==='dark');r.dataset.skin='nothingos';}catch(e){document.documentElement.classList.add('dark');}})()</script>
 <script>(function(){try{var fs=localStorage.getItem('hermes-font-size');if(fs&&fs!=='default')document.documentElement.dataset.fontSize=fs;}catch(e){}})()</script>
 <!-- theme-color: surfaces the active app chrome color to native status bars (Safari status bar, PWA, native WKWebView wrappers). Updated dynamically by boot.js when theme/skin changes. The light/dark default values match style.css :root --sidebar / :root.dark --sidebar. -->
 <meta name="theme-color" content="#FAF7F0" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#090909" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" id="hermes-theme-color" content="#090909">
-<script>(function(){try{var t=localStorage.getItem('hermes-theme')||'dark';if(t==='system')t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';var c=t==='dark'?'#090909':'#F7F7F2';document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.setAttribute('content',c);m.removeAttribute('media');});}catch(e){}})()</script>
+<script>(function(){try{var t=(localStorage.getItem('hermes-theme')||'dark').toLowerCase();var c=(t==='light')?'#f4f3ee':'#0b0b0a';document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.setAttribute('content',c);m.removeAttribute('media');});}catch(e){}})()</script>
 <script>(function(){try{document.documentElement.dataset.workspacePanel=localStorage.getItem('hermes-webui-workspace-panel')==='open'?'open':'closed';}catch(e){document.documentElement.dataset.workspacePanel='closed';}})()</script>
 <script>(function(){try{if(localStorage.getItem('hermes-webui-sidebar-collapsed')==='1')document.documentElement.dataset.sidebarCollapsed='1';}catch(e){}})()</script>
 <link rel="preload" href="static/pwa-startup.js?v=__WEBUI_VERSION__" as="script">
@@ -143,6 +143,13 @@
     <span class="app-titlebar-sub" id="appTitlebarSub" hidden></span>
   </div>
   <div class="app-titlebar-spacer" aria-hidden="true"></div>
+  <!-- Mobile-only: open the workspace file browser / preview drawer. Hidden on
+       desktop (CSS); shown ≤900px where the right panel is a slide-over. -->
+  <button class="app-titlebar-files mobile-files-btn has-tooltip has-tooltip--bottom" id="btnMobileFiles" onclick="openWorkspacePanel('browse')" type="button" data-tooltip="Files" aria-label="Workspace files" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+    </svg>
+  </button>
   <button class="app-titlebar-reload" id="btnReload" onclick="window.location.reload()" type="button" aria-label="Reload" title="Reload page">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16">
       <polyline points="23 4 23 10 17 10"/>
@@ -1037,10 +1044,26 @@
                 <div class="settings-section-meta" data-i18n="settings_section_appearance_meta">Theme, accent colors, and visual style.</div>
               </div>
             </div>
-            <!-- Single-skin fork: Theme + Skin pickers removed. NothingOS dark is the
-                 only design language. Hidden inputs keep boot.js/panels.js autosave
-                 paths working with locked values. -->
-            <input type="hidden" id="settingsTheme" value="dark">
+            <!-- Single-skin fork: Skin picker removed (NothingOS locked); Theme is a
+                 light/dark toggle. Skin stays a hidden locked input for autosave. -->
+            <div class="settings-field">
+              <label data-i18n="settings_label_theme">Theme</label>
+              <div id="themePickerGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px">
+                <button type="button" data-theme-val="dark" onclick="_pickTheme('dark')" class="theme-pick-btn" style="border:1px solid var(--border2);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;background:none;transition:all .15s">
+                  <div style="width:100%;height:40px;border-radius:6px;background:#0b0b0a;border:1px solid rgba(255,255,255,.12);margin-bottom:6px;display:flex;align-items:center;justify-content:center">
+                    <svg width="16" height="16" fill="none" stroke="#ff3b30" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+                  </div>
+                  <span style="font-size:12px;font-weight:500;color:var(--text)" data-i18n="theme_dark">Dark</span>
+                </button>
+                <button type="button" data-theme-val="light" onclick="_pickTheme('light')" class="theme-pick-btn" style="border:1px solid var(--border2);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;background:none;transition:all .15s">
+                  <div style="width:100%;height:40px;border-radius:6px;background:#f4f3ee;border:1px solid rgba(0,0,0,.14);margin-bottom:6px;display:flex;align-items:center;justify-content:center">
+                    <svg width="16" height="16" fill="none" stroke="#ff3b30" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                  </div>
+                  <span style="font-size:12px;font-weight:500;color:var(--text)" data-i18n="theme_light">Light</span>
+                </button>
+              </div>
+              <input type="hidden" id="settingsTheme" value="dark">
+            </div>
             <input type="hidden" id="settingsSkin" value="nothingos">
                         <div class="settings-field">
               <label data-i18n="settings_label_font_size">Font size</label>

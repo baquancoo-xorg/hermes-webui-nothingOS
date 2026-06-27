@@ -1486,12 +1486,10 @@ const _THEMES=[
   {name:'Dark', value:'dark', colors:['#0D0D1A','#141425','#FFD700']},
   {name:'System', value:'system', colors:['#FEFCF7','#0D0D1A','#B8860B']},
 ];
-// Single-skin fork: NothingOS is the only design language. The theme/skin
-// pickers are gone (see #settingsPaneAppearance). _SKINS is kept as a 1-entry
-// list so any residual code that reads it (e.g. a stale picker builder) renders
-// exactly one locked option. _normalizeAppearance now ALWAYS returns
-// {theme:'dark', skin:'nothingos'} regardless of input, so old localStorage or
-// server values can never escape the single design.
+// Single-skin fork: NothingOS is the only skin. Theme is restricted to a
+// light/dark toggle (no System, no other skins). _normalizeAppearance always
+// locks skin to 'nothingos' so old localStorage/server skin values cannot
+// escape the design, but honours an explicit light/dark theme (default dark).
 const _SKINS=[
   {name:'NothingOS', value:'nothingos', colors:['#0b0b0a','#f2f0e8','#ff3b30']},
 ];
@@ -1500,9 +1498,11 @@ const _VALID_SKINS=new Set((_SKINS||[]).map(s=>(s.value||s.name).toLowerCase()))
 let _systemThemeMq=null;
 let _onSystemThemeChange=null;
 
-function _normalizeAppearance(_theme,_skin){
-  // Locked: dark-only, nothingos-only. Inputs are ignored by design.
-  return {theme:'dark',skin:'nothingos'};
+function _normalizeAppearance(theme,_skin){
+  // Skin is locked to nothingos. Theme accepts only 'light' or 'dark'
+  // (anything else — including legacy 'system'/skin names — falls back to dark).
+  const t=typeof theme==='string'?theme.trim().toLowerCase():'';
+  return {theme:t==='light'?'light':'dark',skin:'nothingos'};
 }
 
 // Sync <meta name="theme-color"> with the active theme's app chrome color.
@@ -1534,6 +1534,7 @@ function _syncThemeColorMeta(){
 
 function _setResolvedTheme(isDark){
   document.documentElement.classList.toggle('dark',!!isDark);
+  document.documentElement.classList.toggle('light',!isDark);
   const link=document.getElementById('prism-theme');
   if(!link){ _syncThemeColorMeta(); return; }
   const want=isDark
@@ -1753,15 +1754,21 @@ function applyBotName(){
     // user-selectable theme value or a NON-DEFAULT skin.  That keeps the
     // server in charge for empty first-visit state while preserving explicit
     // light/dark/system choices after a failed autosave.
-    // Single-skin fork: ignore any localStorage/server appearance and force
-    // NothingOS dark. Overwrite stale localStorage so old values (e.g. a
-    // previous 'sienna' skin or 'light' theme) cannot resurface.
-    const theme='dark';
+    // Single-skin fork: skin is always nothingos; theme is the user's light/dark
+    // choice. Prefer an explicit localStorage theme (what the user last saw),
+    // else the server value, else dark. Skin is overwritten so stale values
+    // (e.g. a previous 'sienna') cannot resurface.
+    const lsTheme=(localStorage.getItem('hermes-theme')||'').trim().toLowerCase();
+    const theme=_normalizeAppearance(lsTheme||s.theme).theme;
     const skin='nothingos';
     localStorage.setItem('hermes-theme',theme);
     _applyTheme(theme);
     localStorage.setItem('hermes-skin',skin);
     _applySkin(skin);
+    // Persist theme back to server if it diverged (e.g. a prior autosave failed).
+    if(theme!==_normalizeAppearance(s.theme).theme){
+      try{api('/api/settings',{method:'POST',body:JSON.stringify({theme,skin})});}catch(_){}
+    }
     const fontSize=(s.font_size||localStorage.getItem('hermes-font-size')||'default');
     localStorage.setItem('hermes-font-size',fontSize);
     _applyFontSize(fontSize);

@@ -22,6 +22,9 @@
   --os-line: rgba(242, 240, 232, .13);
   --os-line-strong: rgba(242, 240, 232, .22);
   --os-dot: rgba(242, 240, 232, .16);
+  /* Subtle raised-tile fill — light ink on dark; flips to dark ink on light. */
+  --os-fill: rgba(242, 240, 232, .035);
+  --os-fill-hover: rgba(242, 240, 232, .06);
   --os-red: #ff3b30;
   --os-red-deep: #b81812;
   --os-red-soft: rgba(255, 59, 48, .14);
@@ -66,4 +69,38 @@
   --dur-fast: 120ms;
   --dur-ui: 220ms;
   --dur-slow: 700ms;
+}
+
+/* ── Light variant ──────────────────────────────────────────────────────────
+   NothingOS stays one design language; light mode only flips the surface/ink
+   tokens — the red accent and dot-matrix identity are unchanged. Activated by
+   the .light class on <html> (boot.js / pre-paint). Only the tokens that must
+   invert are listed; everything else inherits from :root above.
+   Red text on light surfaces uses --os-red-deep for WCAG AA contrast. */
+:root.light {
+  color-scheme: light;
+
+  --os-bg: #f4f3ee;
+  --os-bg-2: #eceae0;
+  --os-panel: #fbfaf5;
+  --os-panel-2: #f0eee4;
+  --os-raised: #e7e5d9;
+  --os-text: #1a1813;
+  --os-text-soft: #44413a;
+  --os-muted: #6c685d;
+  --os-faint: #9a9587;
+  --os-line: rgba(20, 18, 14, .14);
+  --os-line-strong: rgba(20, 18, 14, .24);
+  --os-dot: rgba(20, 18, 14, .16);
+  --os-fill: rgba(20, 18, 14, .035);
+  --os-fill-hover: rgba(20, 18, 14, .06);
+  --os-red: #ff3b30;
+  --os-red-deep: #c81e14;
+  --os-red-soft: rgba(255, 59, 48, .12);
+
+  /* Surface gradient/highlight tuned for light: subtle dark inset, not white. */
+  --os-surface-bg:
+    linear-gradient(180deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, .15)),
+    var(--os-panel);
+  --os-surface-inset: inset 0 1px 0 rgba(255, 255, 255, .6);
 }

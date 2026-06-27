@@ -825,9 +825,14 @@ async function cmdUsage(){
 }
 
 async function cmdTheme(args){
-  // Single-skin fork: appearance is locked to NothingOS dark. The /theme
-  // command is inert so it cannot escape the single design language.
-  showToast('Appearance is locked to NothingOS (single skin).');
+  // Single-skin fork: skin is locked to NothingOS; /theme only toggles light/dark.
+  const val=(args||'').toLowerCase().trim();
+  if(val==='light'||val==='dark'){
+    if(typeof _pickTheme==='function') _pickTheme(val);
+    showToast(t('theme_set')+val);
+    return;
+  }
+  showToast(t('theme_usage')+'light|dark');
 }
 
 async function cmdSkills(args){
