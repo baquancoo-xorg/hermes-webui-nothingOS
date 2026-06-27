@@ -1797,43 +1797,21 @@ const _THEMES=[
   {name:'Dark', value:'dark', colors:['#0D0D1A','#141425','#FFD700']},
   {name:'System', value:'system', colors:['#FEFCF7','#0D0D1A','#B8860B']},
 ];
+// NothingOS fork: a single locked skin. _SKINS keeps exactly one entry so any
+// residual picker code renders one option. Theme is restricted to light/dark.
 const _SKINS=[
-  {name:'Default',  colors:['#FFD700','#FFBF00','#CD7F32']},
-  {name:'Ares',     colors:['#FF4444','#CC3333','#992222']},
-  {name:'Mono',     colors:['#CCCCCC','#999999','#666666']},
-  {name:'Graphite', colors:['#FFFFFF','#D6D6D6','#242424']},
-  {name:'Slate',    colors:['#334155','#475569','#64748b']},
-  {name:'Poseidon', colors:['#0EA5E9','#0284C7','#0369A1']},
-  {name:'Sisyphus', colors:['#A78BFA','#8B5CF6','#7C3AED']},
-  {name:'Charizard',colors:['#FB923C','#F97316','#EA580C']},
-  {name:'Sienna',   colors:['#D97757','#C06A49','#9A523A']},
-  {name:'Catppuccin',colors:['#CBA6F7','#B4BEFE','#8839EF']},
-  {name:'Hepburn',   colors:['#c6246a','#ec5597','#f2abca']},
-  {name:'Nous',     colors:['#4682B4','#3A6E9A','#2C5F88']},
-  {name:'Neon',     colors:['#B347FF','#C76BFF','#00DDFF']},
-  {name:'Geist Contrast', value:'geist-contrast', colors:['#000000','#ffffff','#FFF175']},
-  {name:'Zeus',     colors:['#FFD700','#FFBF00','#1A1A00']},
-  {name:'Verdigris', value:'verdigris', colors:['#C89A5A','#0F1714','#22342C']},
+  {name:'NothingOS', value:'nothingos', colors:['#0b0b0a','#f2f0e8','#ff3b30']},
 ];
 const _VALID_THEMES=new Set((_THEMES||[]).map(t=>t.value));
 const _VALID_SKINS=new Set((_SKINS||[]).map(s=>(s.value||s.name).toLowerCase()));
-const _LEGACY_THEME_MAP={
-  slate:{theme:'dark',skin:'slate'},
-  solarized:{theme:'dark',skin:'poseidon'},
-  monokai:{theme:'dark',skin:'sisyphus'},
-  nord:{theme:'dark',skin:'slate'},
-  oled:{theme:'dark',skin:'default'},
-};
 let _systemThemeMq=null;
 let _onSystemThemeChange=null;
 
-function _normalizeAppearance(theme,skin){
-  const rawTheme=typeof theme==='string'?theme.trim().toLowerCase():'';
-  const rawSkin=typeof skin==='string'?skin.trim().toLowerCase():'';
-  const legacy=_LEGACY_THEME_MAP[rawTheme];
-  const nextTheme=legacy?legacy.theme:(_VALID_THEMES.has(rawTheme)?rawTheme:'dark');
-  const nextSkin=_VALID_SKINS.has(rawSkin)?rawSkin:(legacy?legacy.skin:'default');
-  return {theme:nextTheme,skin:nextSkin};
+function _normalizeAppearance(theme,_skin){
+  // Skin is locked to nothingos. Theme accepts only 'light' or 'dark'
+  // (anything else — legacy 'system'/skin names — falls back to dark).
+  const t=typeof theme==='string'?theme.trim().toLowerCase():'';
+  return {theme:t==='light'?'light':'dark',skin:'nothingos'};
 }
 
 // Sync <meta name="theme-color"> with the active theme's app chrome color.
@@ -1865,6 +1843,7 @@ function _syncThemeColorMeta(){
 
 function _setResolvedTheme(isDark){
   document.documentElement.classList.toggle('dark',!!isDark);
+  document.documentElement.classList.toggle('light',!isDark);
   const link=document.getElementById('prism-theme');
   if(!link){ _syncThemeColorMeta(); return; }
   const want=isDark
@@ -2190,24 +2169,20 @@ window._applyTitlebarProfileVisibility=_applyTitlebarProfileVisibility;
     // user-selectable theme value or a NON-DEFAULT skin.  That keeps the
     // server in charge for empty first-visit state while preserving explicit
     // light/dark/system choices after a failed autosave.
-    const srvAppearance=_normalizeAppearance(s.theme,s.skin);
+    // NothingOS fork: skin is always nothingos; theme is the user's light/dark
+    // choice (prefer localStorage = what they last saw, else server, else dark).
+    // Skin is overwritten so any stale value (e.g. an old 'sienna') cannot
+    // resurface and escape the single design.
     const lsTheme=(localStorage.getItem('hermes-theme')||'').trim().toLowerCase();
-    const lsSkin=(localStorage.getItem('hermes-skin')||'').trim().toLowerCase();
-    const lsAppearance=_normalizeAppearance(lsTheme||null,lsSkin||null);
-    const lsHasExplicitSkin=lsSkin&&lsSkin!=='default';
-    const lsHasExplicitTheme=lsTheme&&['system','light','dark'].includes(lsTheme);
-    const theme=lsHasExplicitTheme?lsAppearance.theme:srvAppearance.theme;
-    const skin=lsHasExplicitSkin?lsAppearance.skin:srvAppearance.skin;
+    const theme=_normalizeAppearance(lsTheme||s.theme).theme;
+    const skin='nothingos';
     localStorage.setItem('hermes-theme',theme);
     _applyTheme(theme);
     localStorage.setItem('hermes-skin',skin);
     _applySkin(skin);
-    // Reconcile: if localStorage and server disagree, push localStorage
-    // values to the server so the next refresh won't revert.
-    if((lsHasExplicitTheme||lsHasExplicitSkin)&&(theme!==srvAppearance.theme||skin!==srvAppearance.skin)){
-      try{
-        api('/api/settings',{method:'POST',body:JSON.stringify({theme,skin})});
-      }catch(_){}
+    // Persist theme back to the server if it diverged (e.g. a prior autosave failed).
+    if(theme!==_normalizeAppearance(s.theme).theme){
+      try{api('/api/settings',{method:'POST',body:JSON.stringify({theme,skin})});}catch(_){}
     }
     const fontSize=(s.font_size||localStorage.getItem('hermes-font-size')||'default');
     localStorage.setItem('hermes-font-size',fontSize);
