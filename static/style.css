@@ -897,6 +897,7 @@
   .cron-gateway-notice{margin:8px 8px 0;}
   .cron-item{width:100%;min-width:0;box-sizing:border-box;border-radius:10px;border:1px solid var(--border);margin-bottom:6px;overflow:hidden;transition:border-color .15s,background .15s;background:rgba(255,255,255,.02);cursor:pointer;}
   .cron-item:hover{border-color:var(--border2);}
+  .cron-card-meta{padding:0 12px 10px 42px;font-family:var(--font-mono);font-size:10px;line-height:1.45;color:var(--muted);overflow-wrap:anywhere;}
   .cron-paused-section{margin:8px 0 0;border-top:1px solid var(--border);padding-top:6px;}
   .cron-paused-summary{cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);padding:6px 4px;letter-spacing:.02em;text-transform:uppercase;list-style:none;outline:none;user-select:none;}
   .cron-paused-summary::-webkit-details-marker{display:none;}
@@ -907,12 +908,21 @@
   .cron-header{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;}
   .cron-name{flex:1;font-size:13px;color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .cron-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;flex-shrink:0;}
+.cron-status.os-led{padding:0;border-radius:0;background:transparent!important;color:var(--muted);font-weight:700;}
+.cron-status.os-led.active{color:var(--text);}
+.cron-status.os-led.paused,.cron-status.os-led.disabled{color:var(--muted);}
+.cron-status.os-led.error{color:var(--error);}
+.cron-status.os-led.attention{color:var(--warning);}
+.cron-status.os-led.active::before{background:var(--os-text-soft);}
+.cron-status.os-led.paused::before,.cron-status.os-led.disabled::before{background:var(--os-faint);}
+.cron-status.os-led.error::before{background:var(--error);}
+.cron-status.os-led.attention::before{background:var(--warning);}
   .cron-profile-badge{font-size:10px;font-weight:650;padding:2px 7px;border-radius:99px;flex-shrink:0;max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid var(--border);color:var(--muted);background:var(--surface-subtle);}
-  .cron-status.active{background:rgba(34,197,94,.15);color:var(--success);}
-  .cron-status.paused{background:var(--accent-bg-strong);color:var(--accent-text);}
-  .cron-status.disabled{background:rgba(255,255,255,.07);color:var(--muted);}
-  .cron-status.error{background:rgba(239,83,80,.12);color:var(--error);}
-  .cron-status.attention{background:rgba(245,158,11,.16);color:rgba(245,158,11,.95);}
+.cron-status.active:not(.os-led){background:rgba(34,197,94,.15);color:var(--success);}
+  .cron-status.paused:not(.os-led){background:var(--accent-bg-strong);color:var(--accent-text);}
+  .cron-status.disabled:not(.os-led){background:rgba(255,255,255,.07);color:var(--muted);}
+  .cron-status.error:not(.os-led){background:rgba(239,83,80,.12);color:var(--error);}
+  .cron-status.attention:not(.os-led){background:rgba(245,158,11,.16);color:rgba(245,158,11,.95);}
   .cron-body{display:none;padding:0 12px 10px;border-top:1px solid var(--border);overflow:hidden;}
   .cron-body.open{display:block;}
   .cron-schedule{font-size:11px;color:var(--muted);margin:8px 0 6px;}
@@ -3544,6 +3554,9 @@ main.main > #mainPlugin{display:none;}
 .panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:41px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;}
 .panel-head-actions{display:flex;align-items:center;gap:4px;text-transform:none;letter-spacing:normal;}
 .panel-head-btn{width:24px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:none;background:transparent;border-radius:6px;color:var(--muted);cursor:pointer;transition:background .15s,color .15s;flex-shrink:0;}
+.panel-head-btn--label{width:auto;min-width:0;height:28px;gap:6px;padding:0 10px;border:1px solid var(--border);background:var(--input-bg);font-size:11px;font-weight:650;letter-spacing:.01em;color:var(--text);}
+.panel-head-btn--label svg{width:13px;height:13px;}
+.cron-new-job-btn{border-color:var(--accent-bg-strong);background:var(--accent-bg);color:var(--accent-text);}
 .mobile-sidebar-close{display:none;}
 .panel-head-btn:hover{background:var(--accent-bg);color:var(--accent-text);}
 .panel-head-btn:disabled,.panel-head-btn[aria-busy="true"]{opacity:.5;cursor:wait;}
@@ -4157,8 +4170,7 @@ main.main > #mainPlugin{display:none;}
 /* ── Cron alert badge ── */
 .cron-badge{position:absolute;top:2px;right:2px;background:#e53e3e;color:#fff;font-size:9px;font-weight:700;min-width:14px;height:14px;line-height:14px;text-align:center;border-radius:7px;padding:0 3px;}
 .cron-new-dot{width:7px;height:7px;border-radius:50%;background:var(--success,#22c55e);flex-shrink:0;animation:cron-dot-pulse 2s ease-in-out infinite;}
-.cron-agent-badge{flex-shrink:0;font-size:12px;line-height:1;}
-.cron-script-badge{flex-shrink:0;font-size:12px;line-height:1;opacity:.92;}
+.cron-job-index{flex-shrink:0;min-width:22px;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;color:var(--muted);}
 .cron-script-job-banner{margin-bottom:12px;}
 .cron-script-job-banner .detail-alert-title{font-weight:600;color:rgba(245,158,11,.98);}
 .detail-script{background:var(--sidebar);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;white-space:pre-wrap;line-height:1.55;color:var(--text);font-family:'SF Mono',ui-monospace,monospace;word-break:break-word;}
@@ -5851,29 +5863,34 @@ html[data-conversation-outline="enabled"] #outlineToggleBtn:not([hidden]){displa
 }
 
 @media (max-width:768px){
-  html,body{overflow-x:clip;}
-  .layout{min-width:0;}
-  .rail{display:none!important;}
-  .main{width:100%;max-width:100vw;}
-  .main-view,.main-view-body,.main-view-content,.messages-shell,.messages{min-width:0;max-width:100%;}
-  .rightpanel{--mobile-rightpanel-width:100vw!important;width:100vw!important;max-width:100vw!important;}
-  .rightpanel.mobile-open{right:0!important;}
-  .main-view-actions .panel-head-btn:nth-child(n+3){display:none;}
-  .session-item.active .session-title{color:var(--text);}
-  #mainMemory .main-view-body,
-  #mainSettings .settings-main{padding-bottom:calc(20px + env(safe-area-inset-bottom));}
-  .memory-content{font-family:var(--font-ui);font-size:14px;line-height:1.7;overflow-wrap:anywhere;}
-  .kanban-filter-stack{position:relative;display:grid;grid-template-columns:1fr auto;align-items:start;gap:8px;padding:8px 10px;max-height:116px;overflow:auto;}
-  .kanban-filter-stack::before{content:"Filters";grid-column:1/-1;color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;}
-  .kanban-filter-stack select,
-  .kanban-filter-stack .kanban-check,
-  .kanban-filter-stack #kanbanBulkBar{font-size:11px;min-height:36px;}
-  .kanban-new-task-row{grid-column:1/-1;max-width:100%;overflow:hidden;}
-  #kanbanNewTaskTitle{min-width:0;}
-  .kanban-board-wrap{overflow:visible;}
-  .kanban-board{display:grid;grid-template-columns:1fr;gap:10px;overflow:visible;padding:8px 10px 16px;}
-  .kanban-column{min-width:0;width:100%;scroll-snap-align:none;}
-  .kanban-card{box-shadow:none;}
+  :root[data-skin="nothingos"],
+  :root[data-skin="nothingos"] body{overflow-x:clip;}
+  :root[data-skin="nothingos"] .layout{min-width:0;}
+  :root[data-skin="nothingos"] .rail{display:none!important;}
+  :root[data-skin="nothingos"] .main{width:100%;max-width:100vw;}
+  :root[data-skin="nothingos"] .main-view,
+  :root[data-skin="nothingos"] .main-view-body,
+  :root[data-skin="nothingos"] .main-view-content,
+  :root[data-skin="nothingos"] .messages-shell,
+  :root[data-skin="nothingos"] .messages{min-width:0;max-width:100%;}
+  :root[data-skin="nothingos"] .rightpanel{--mobile-rightpanel-width:100vw!important;width:100vw!important;max-width:100vw!important;}
+  :root[data-skin="nothingos"] .rightpanel.mobile-open{right:0!important;}
+  :root[data-skin="nothingos"] .main-view-actions .panel-head-btn:nth-child(n+3){display:none;}
+  :root[data-skin="nothingos"] .session-item.active .session-title{color:var(--text);}
+  :root[data-skin="nothingos"] #mainMemory .main-view-body,
+  :root[data-skin="nothingos"] #mainSettings .settings-main{padding-bottom:calc(20px + env(safe-area-inset-bottom));}
+  :root[data-skin="nothingos"] .memory-content{font-family:var(--font-ui);font-size:14px;line-height:1.7;overflow-wrap:anywhere;}
+  :root[data-skin="nothingos"] .kanban-filter-stack{position:relative;display:grid;grid-template-columns:1fr auto;align-items:start;gap:8px;padding:8px 10px;max-height:116px;overflow:auto;}
+  :root[data-skin="nothingos"] .kanban-filter-stack::before{content:"Filters";grid-column:1/-1;color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;}
+  :root[data-skin="nothingos"] .kanban-filter-stack select,
+  :root[data-skin="nothingos"] .kanban-filter-stack .kanban-check,
+  :root[data-skin="nothingos"] .kanban-filter-stack #kanbanBulkBar{font-size:11px;min-height:36px;}
+  :root[data-skin="nothingos"] .kanban-new-task-row{grid-column:1/-1;max-width:100%;overflow:hidden;}
+  :root[data-skin="nothingos"] #kanbanNewTaskTitle{min-width:0;}
+  :root[data-skin="nothingos"] .kanban-board-wrap{overflow:visible;}
+  :root[data-skin="nothingos"] .kanban-board{display:grid;grid-template-columns:1fr;gap:10px;overflow:visible;padding:8px 10px 16px;}
+  :root[data-skin="nothingos"] .kanban-column{min-width:0;width:100%;scroll-snap-align:none;}
+  :root[data-skin="nothingos"] .kanban-card{box-shadow:none;}
 }
 
 /* ── NothingOS shell scaffold (V2 route-owned controls) ──────────────────────

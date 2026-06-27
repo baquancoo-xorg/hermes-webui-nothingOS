@@ -28,9 +28,13 @@ def test_cron_detail_branches_on_no_agent():
     assert "cron-mode-badge ${isNoAgent ? 'script' : 'agent'}" in PANELS_JS
 
 
-def test_cron_list_shows_script_badge():
-    assert "cron-script-badge" in PANELS_JS
-    assert "cron_script_badge_title" in PANELS_JS
+def test_cron_list_uses_v2_numeric_index_and_led_status():
+    assert "cron-script-badge" not in PANELS_JS
+    assert "cron-agent-badge" not in PANELS_JS
+    assert "cron-job-index" in PANELS_JS
+    assert "cron-status os-led" in PANELS_JS
+    assert "🤖" not in PANELS_JS
+    assert "📜" not in PANELS_JS
 
 
 def test_cron_form_hides_prompt_for_script_jobs():
@@ -47,7 +51,8 @@ def test_cron_runs_skip_usage_strip_for_script_jobs():
 
 
 def test_cron_script_job_styles_exist():
-    assert ".cron-script-badge" in STYLE_CSS
+    assert ".cron-job-index" in STYLE_CSS
+    assert ".cron-status.os-led" in STYLE_CSS
     assert ".cron-script-job-banner" in STYLE_CSS
     assert ".detail-script{" in STYLE_CSS
     assert ".detail-badge.cron-mode-badge.script" in STYLE_CSS
@@ -66,7 +71,6 @@ def test_cron_script_job_i18n_keys_exist_in_every_locale():
         "cron_script_output",
         "cron_script_path_label",
         "cron_script_path_hint",
-        "cron_script_badge_title",
         "cron_workdir_label",
     ):
         assert I18N_JS.count(f"{key}:") >= locale_count, key
