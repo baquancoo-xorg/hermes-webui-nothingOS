@@ -121,9 +121,11 @@ class TestCronSkillCacheInvalidation:
         )
 
 
-# ── Group D: System (auto) theme ──────────────────────────────────────────────
+# ── Group D: NothingOS theme contract (single skin + Light/Dark only) ─────────
+# The fork removed the System (auto) theme and the 16-skin system. These tests
+# assert the NEW contract: skin is locked to 'nothingos', theme is light|dark.
 
-class TestSystemTheme:
+class TestNothingOSTheme:
 
     def test_apply_theme_helper_in_boot_js(self):
         src = read("static/boot.js")
@@ -131,65 +133,48 @@ class TestSystemTheme:
             "_applyTheme helper function must be defined in boot.js"
         )
 
-    def test_apply_theme_resolves_system(self):
+    def test_normalize_locks_skin_to_nothingos(self):
         src = read("static/boot.js")
-        assert "normalized.theme==='system'" in src or "=== 'system'" in src, (
-            "_applyTheme must branch on 'system' to resolve via matchMedia"
+        assert "skin:'nothingos'" in src, (
+            "_normalizeAppearance must lock skin to 'nothingos'"
         )
 
-    def test_apply_theme_uses_matchmedia(self):
+    def test_theme_picker_has_light_and_dark_only(self):
+        html = read("static/index.html")
+        assert "_pickTheme('light')" in html, "Theme picker must have a Light button"
+        assert "_pickTheme('dark')" in html, "Theme picker must have a Dark button"
+        assert "_pickTheme('system')" not in html, (
+            "System theme was removed — picker must not offer it"
+        )
+
+    def test_skin_picker_removed(self):
+        html = read("static/index.html")
+        assert "skinPickerGrid" not in html, (
+            "Skin picker was removed (single locked skin)"
+        )
+        assert 'id="settingsSkin" value="nothingos"' in html, (
+            "Locked skin hidden input must default to nothingos"
+        )
+
+    def test_prepaint_locks_nothingos(self):
+        html = read("static/index.html")
+        assert "localStorage.setItem('hermes-skin','nothingos')" in html, (
+            "Pre-paint script must lock skin to nothingos so stale values can't persist"
+        )
+
+    def test_set_resolved_theme_toggles_light_class(self):
         src = read("static/boot.js")
-        assert "prefers-color-scheme" in src, (
-            "_applyTheme must use matchMedia('(prefers-color-scheme:dark)')"
+        assert "classList.toggle('light'" in src, (
+            "_setResolvedTheme must toggle the .light class for light mode"
         )
 
-    def test_load_settings_calls_apply_theme(self):
-        src = read("static/boot.js")
-        assert "_applyTheme(appearance.theme)" in src, (
-            "loadSettings must call _applyTheme() instead of direct data-theme assignment"
-        )
-
-    def test_system_option_in_theme_picker(self):
-        html = read("static/index.html")
-        assert "_pickTheme('system')" in html, (
-            "Theme picker must include a system theme button"
-        )
-        assert ">System<" in html, (
-            "Theme picker must show 'System' label"
-        )
-
-    def test_theme_picker_uses_pick_theme(self):
-        html = read("static/index.html")
-        assert "_pickTheme(" in html, (
-            "Theme buttons must call _pickTheme()"
-        )
-
-    def test_flicker_script_resolves_system(self):
-        html = read("static/index.html")
-        # The head flicker-prevention IIFE must handle 'system'
-        assert "==='system'" in html or "=== 'system'" in html, (
-            "Flicker-prevention head script must resolve 'system' before setting data-theme"
-        )
-        assert "legacy={slate:['dark','slate']" in html, (
-            "Flicker-prevention head script must normalize legacy theme names on first paint"
-        )
-
-    def test_system_in_commands_themes_list(self):
+    def test_commands_theme_light_dark_only(self):
         src = read("static/commands.js")
-        assert "'system'" in src, (
-            "/theme command must include 'system' in the valid themes array"
+        assert "val==='light'||val==='dark'" in src, (
+            "/theme command must only accept light|dark"
         )
-
-    def test_commands_uses_apply_theme(self):
-        src = read("static/commands.js")
-        assert "_applyTheme(appearance.theme)" in src, (
-            "cmdTheme must call _applyTheme() with the normalized canonical theme"
-        )
-
-    def test_commands_accept_legacy_theme_aliases(self):
-        src = read("static/commands.js")
-        assert "const legacyThemes=Object.keys(_LEGACY_THEME_MAP||{});" in src, (
-            "cmdTheme must accept legacy theme aliases and map them onto canonical appearance values"
+        assert "_LEGACY_THEME_MAP" not in src, (
+            "Legacy theme alias map was removed"
         )
 
     def test_panels_reverts_via_apply_theme(self):
@@ -197,60 +182,5 @@ class TestSystemTheme:
         block = re.search(r"function _revertSettingsPreview\(\)\{.*?\n\}", src, re.DOTALL)
         assert block, "_revertSettingsPreview() should be present"
         assert "_applyTheme(" not in block.group(0), (
-            "_revertSettingsPreview must no longer call _applyTheme() since Appearance now autosaves"
-        )
-
-    def test_system_theme_apply_path_uses_apply_theme(self):
-        src = read("static/boot.js")
-        assert "_applyTheme(appearance.theme)" in src, (
-            "System theme still must be activated through _applyTheme() in boot/theme application"
-        )
-
-    def test_panels_saves_system_string_not_resolved(self):
-        src = read("static/panels.js")
-        assert "localStorage.getItem('hermes-theme')" in src, (
-            "_settingsThemeOnOpen must read from localStorage to preserve "
-            "the 'system' string, not the resolved 'dark'/'light'"
-        )
-
-    def test_i18n_cmd_theme_includes_system_english(self):
-        src = read("static/i18n.js")
-        assert "system/dark/light" in src, (
-            "English cmd_theme i18n key must include 'system' in the theme list"
-        )
-
-    def test_i18n_cmd_theme_all_locales(self):
-        src = read("static/i18n.js")
-        count = src.count("system/dark/light")
-        assert count >= 5, (
-            f"cmd_theme description should mention 'system' in all 5 locales; "
-            f"found {count}"
-        )
-
-    def test_theme_listener_cleanup_uses_stable_handler(self):
-        src = read("static/boot.js")
-        assert "_systemThemeMq&&_onSystemThemeChange" in src, (
-            "_applyTheme must track the active OS-theme listener so it can be removed cleanly"
-        )
-        assert "removeEventListener('change',_onSystemThemeChange)" in src, (
-            "_applyTheme must remove the previous OS-theme listener before adding a new one"
-        )
-
-    def test_boot_reconcile_treats_light_dark_as_explicit_theme_choices(self):
-        src = read("static/boot.js")
-        assert "['system','light','dark'].includes(lsTheme)" in src, (
-            "boot appearance reconciliation must preserve explicit light/dark/system "
-            "localStorage selections when a prior autosave failed"
-        )
-
-    def test_panels_hydrates_appearance_before_models_fetch(self):
-        src = read("static/panels.js")
-        # PR #2799 (v0.51.119): skin precedence now prefers localStorage over settings.skin
-        # so the inline-gate-resolved DOM skin survives the picker hydration.
-        skin_idx = src.index("const skinVal=(localStorage.getItem('hermes-skin')||settings.skin||'default').toLowerCase();")
-        # models is now declared as let models=null before the try block
-        models_idx = src.index("models=await api('/api/models');")
-        assert skin_idx < models_idx, (
-            "loadSettingsPanel must hydrate theme/skin before awaiting /api/models, "
-            "otherwise a slow model fetch can clobber an in-progress skin selection"
+            "_revertSettingsPreview must not call _applyTheme() since Appearance autosaves"
         )

@@ -764,16 +764,25 @@ class TestToolCardDesignTokens:
         for token in expected_tokens:
             assert token in css_min, f"Base light palette token missing: {token}"
 
-    def test_default_skin_preview_stays_upstream(self):
+    def test_nothingos_skin_is_the_only_registered_skin(self):
+        # NothingOS fork: _SKINS holds exactly one locked skin.
         boot_min = re.sub(r"\s+", "", BOOT_JS)
-        assert "{name:'Default',colors:['#FFD700','#FFBF00','#CD7F32']}" in boot_min, (
-            "The Default skin swatch should stay aligned with the upstream gold base."
+        assert "{name:'NothingOS',value:'nothingos'" in boot_min, (
+            "The single registered skin must be NothingOS."
         )
 
     def test_tool_card_css_uses_design_tokens_for_chrome(self):
+        # Validate the BASE bare `.tool-card{` rule. Other rules scope it
+        # (`:root:not(.dark) .tool-card`, `[data-skin] .tool-card`, the NothingOS
+        # override) and must be skipped — match a rule-start boundary so we land
+        # on the standalone selector.
         css_min = re.sub(r"\s+", "", CSS)
-        assert ".tool-card{" in css_min, ".tool-card rule missing"
-        tool_card_rule = css_min.rsplit(".tool-card{", 1)[1].split("}", 1)[0]
+        # The base bare `.tool-card{...}` rule carries the transparent/border-0
+        # chrome contract. Match that specific rule (the NothingOS layer appends
+        # a separate `.tool-card` override later, so plain split/rsplit is wrong).
+        m = re.search(r"\.tool-card\{(background:transparent[^}]*)\}", css_min)
+        assert m, ".tool-card base (transparent) rule missing"
+        tool_card_rule = m.group(1)
         rows_rule = css_min.split(".tg-rows{", 1)[1].split("}", 1)[0]
         assert "background:transparent" in tool_card_rule
         assert "border:0" in tool_card_rule

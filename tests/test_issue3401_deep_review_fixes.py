@@ -108,9 +108,10 @@ def test_persist_inflight_saves_run_journal_seq():
 
 # ── FIX 3: every registered skin must have CSS (general guard) ──
 
-def test_neon_skin_css_restored():
-    assert ':root[data-skin="neon"]' in CSS, "Neon skin CSS block must be present"
-    assert ':root.dark[data-skin="neon"]' in CSS, "Neon dark variant CSS must be present"
+def test_nothingos_skin_css_present():
+    # NothingOS fork: the 16 legacy skins were removed; the single locked skin
+    # must have its CSS block (alias bridge + component styling).
+    assert ':root[data-skin="nothingos"]' in CSS, "NothingOS skin CSS block must be present"
 
 
 def test_every_registered_skin_has_css():
