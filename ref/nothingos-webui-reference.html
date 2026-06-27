@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hermes WebUI — NothingOS-inspired Reference</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0b0a; --panel: #161613; --raised: #24241f;
+      --text: #f2f0e8; --soft: #c9c5b8; --muted: #8b877b; --faint: #5b574e;
+      --line: rgba(242,240,232,.13); --line2: rgba(242,240,232,.24);
+      --dot: rgba(242,240,232,.16); --red: #ff3b30;
+      --ease: cubic-bezier(.16, 1, .3, 1);
+      --mono: "Geist Mono", "JetBrains Mono", "SFMono-Regular", ui-monospace, monospace;
+      --ui: "Geist", "Satoshi", "SF Pro Display", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: var(--ui); }
+    body { overflow-x: hidden; }
+    body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; background: radial-gradient(circle at 12% 16%, rgba(255,59,48,.13), transparent 24rem), radial-gradient(circle at 92% 8%, rgba(255,255,255,.05), transparent 20rem), radial-gradient(circle, rgba(242,240,232,.08) 1px, transparent 1px); background-size: auto, auto, 12px 12px; opacity: .9; mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.78) 40%, rgba(0,0,0,.32) 100%); }
+    .app { position: relative; z-index: 2; min-height: 100dvh; display: grid; grid-template-rows: auto 1fr auto; padding: 18px; gap: 14px; }
+    .ambient { height: 34px; border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.01)); display: grid; grid-template-columns: 220px 1fr 220px; align-items: center; padding: 0 14px; font: 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+    .pulse { height: 5px; border-radius: 999px; background: linear-gradient(90deg, transparent 0 12%, var(--red) 12% 18%, rgba(255,255,255,.85) 18% 22%, transparent 22% 100%); background-size: 220% 100%; animation: sweep 2.4s var(--ease) infinite; opacity: .88; }
+    @keyframes sweep { from { background-position: 140% 0; } to { background-position: -40% 0; } }
+    .shell { min-height: calc(100dvh - 120px); display: grid; grid-template-columns: 236px minmax(420px, 1fr) 318px; gap: 14px; }
+    .surface { position: relative; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.018)), var(--panel); border: 1px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); overflow: hidden; }
+    .surface::before { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(circle, var(--dot) 1px, transparent 1px); background-size: 14px 14px; opacity: .16; mask-image: linear-gradient(135deg, #000, transparent 68%); }
+    .inner { position: relative; z-index: 2; }
+    .rail { padding: 14px; display: flex; flex-direction: column; gap: 16px; }
+    .brand { border: 1px solid var(--line2); background: #0f0f0d; padding: 16px; min-height: 112px; }
+    .mark { display: grid; grid-template-columns: repeat(6, 8px); gap: 4px; width: max-content; margin-bottom: 16px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text); opacity: .9; }
+    .dot.red { background: var(--red); }
+    .eyebrow { font: 10px/1 var(--mono); letter-spacing: .22em; color: var(--muted); text-transform: uppercase; }
+    .h1 { margin: 8px 0 0; font-size: 20px; letter-spacing: -.04em; }
+    .nav { display: grid; gap: 8px; }
+    .nav button, .tile, .composer, .message, .widget, .quick-tile { border: 1px solid var(--line); background: rgba(255,255,255,.035); color: var(--text); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); }
+    .nav button { width: 100%; min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 11px; font: 12px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; cursor: pointer; transition: transform .22s var(--ease), border-color .22s var(--ease), background .22s var(--ease); }
+    .nav button.active { background: var(--text); color: #11110f; border-color: var(--text); }
+    .nav button.active::before { content: ""; width: 4px; height: 18px; background: var(--red); }
+    .main { display: grid; grid-template-rows: auto 1fr auto; }
+    .main-head { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .title { font-size: clamp(24px, 3vw, 44px); letter-spacing: -.065em; margin: 0; line-height: .96; }
+    .status-chip { border: 1px solid var(--line); background: rgba(255,59,48,.12); color: var(--text); padding: 8px 10px; font: 11px/1 var(--mono); letter-spacing: .09em; text-transform: uppercase; }
+    .stream { padding: 20px; display: grid; align-content: end; gap: 14px; }
+    .message { padding: 16px; max-width: 78%; background: rgba(255,255,255,.032); }
+    .message.user { justify-self: end; background: var(--raised); }
+    .message.assistant { justify-self: start; }
+    .msg-label { font: 10px/1 var(--mono); letter-spacing: .18em; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+    .msg-text { color: var(--soft); line-height: 1.5; font-size: 14px; }
+    .tool-box { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+    .seg { height: 6px; background: rgba(255,255,255,.06); position: relative; overflow: hidden; }
+    .seg::after { content: ""; position: absolute; inset: 0 auto 0 0; width: 32%; background: var(--red); animation: slide 1.8s var(--ease) infinite; }
+    @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(320%); } }
+    .composer-wrap { padding: 14px; border-top: 1px solid var(--line); }
+    .composer { min-height: 70px; display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 0 10px 0 18px; background: #10100e; border-color: var(--line2); }
+    .placeholder { color: var(--faint); font: 15px/1.4 var(--mono); }
+    .send { border: 0; color: #11110f; background: var(--red); font: 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; padding: 15px 18px; cursor: pointer; transition: transform .16s var(--ease); }
+    .widgets { padding: 14px; display: grid; gap: 12px; align-content: start; }
+    .widget { padding: 14px; min-height: 104px; background: rgba(255,255,255,.033); }
+    .widget.big { min-height: 168px; }
+    .widget h3 { margin: 0 0 12px; font: 11px/1 var(--mono); text-transform: uppercase; letter-spacing: .16em; color: var(--muted); }
+    .metric { font: 34px/.9 var(--mono); letter-spacing: -.08em; }
+    .sub { color: var(--muted); font-size: 12px; margin-top: 8px; }
+    .mini-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+    .mini { aspect-ratio: 1; border: 1px solid var(--line); display: grid; place-items: center; font: 12px/1 var(--mono); color: var(--soft); background: rgba(255,255,255,.028); }
+    .mini.on { background: var(--text); color: #11110f; } .mini.hot { background: var(--red); color: #11110f; border-color: var(--red); }
+    .quick { display: grid; grid-template-columns: 1.2fr repeat(7, 1fr); gap: 10px; }
+    .quick-tile { min-height: 74px; padding: 12px; background: rgba(255,255,255,.04); position: relative; overflow: hidden; }
+    .quick-tile::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: 8px; height: 3px; background: var(--line); }
+    .quick-tile.active::after { background: var(--red); }
+    .quick-label { font: 10px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+    .quick-value { margin-top: 12px; font: 13px/1 var(--mono); color: var(--text); }
+    @media (max-width: 1100px) { .shell { grid-template-columns: 78px 1fr; } .widgets { display: none; } .brand .h1, .nav span { display: none; } .brand { min-height: 76px; padding: 10px; } .brand .mark { transform: scale(.7); transform-origin: left top; margin: 0; } .quick { grid-template-columns: repeat(4, 1fr); } .ambient { grid-template-columns: 1fr; gap: 8px; height: auto; min-height: 34px; } .ambient > :not(.pulse) { display: none; } }
+    @media (max-width: 720px) { .app { padding: 10px; } .shell { grid-template-columns: 1fr; min-height: auto; } .rail { display: none; } .main { min-height: calc(100dvh - 170px); } .main-head { align-items: flex-start; } .title { font-size: 28px; } .message { max-width: 100%; } .quick { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="ambient" aria-label="Ambient agent status"><div>HERMES OS / SINGLE SKIN</div><div class="pulse" aria-hidden="true"></div><div style="text-align:right">TOOL RUNNING</div></section>
+    <section class="shell">
+      <aside class="surface rail"><div class="inner brand"><div class="mark" aria-hidden="true"><i class="dot"></i><i class="dot"></i><i class="dot red"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot red"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot red"></i><i class="dot"></i><i class="dot"></i></div><div class="eyebrow">CoWorkOS</div><p class="h1">Command surface</p></div><nav class="inner nav" aria-label="OS rail"><button class="active"><span>●</span><span>Session</span></button><button><span>◌</span><span>Workspace</span></button><button><span>◍</span><span>Tools</span></button><button><span>◒</span><span>Memory</span></button><button><span>◐</span><span>Cron</span></button></nav></aside>
+      <section class="surface main"><header class="inner main-head"><div><div class="eyebrow">Agent Conversation</div><h1 class="title">NothingOS-inspired Hermes WebUI</h1></div><div class="status-chip">WAITING / APPROVAL</div></header><div class="inner stream"><article class="message assistant"><div class="msg-label">Hermes</div><div class="msg-text">Agent state is expressed through ambient strips, not noisy banners. Tool calls collapse into technical modules.</div><div class="tool-box"><div>TERMINAL / npm run build</div><div class="seg"></div></div></article><article class="message user"><div class="msg-label">Dominium</div><div class="msg-text">One skin only. No fallback to old Tungbillee colors.</div></article></div><footer class="inner composer-wrap"><div class="composer"><div class="placeholder">Ask Hermes or type a command...</div><button class="send">Send</button></div></footer></section>
+      <aside class="surface widgets"><div class="inner widget big"><h3>Glance / Current run</h3><div class="metric">06</div><div class="sub">tools active · 1 approval pending · branch clean</div><div class="mini-grid"><div class="mini on">M</div><div class="mini">T</div><div class="mini hot">!</div><div class="mini">G</div></div></div><div class="inner widget"><h3>Memory mode</h3><div class="metric" style="font-size:24px">FOCUS</div><div class="sub">context injected only when useful</div></div><div class="inner widget"><h3>Glyph-like signal</h3><div class="seg" style="margin-top:18px"></div><div class="sub">generic ambient rhythm, not copied hardware glyph</div></div></aside>
+    </section>
+    <section class="quick" aria-label="Quick command tray"><div class="quick-tile active"><div class="quick-label">Model</div><div class="quick-value">custom / gpt-5.5</div></div><div class="quick-tile"><div class="quick-label">Profile</div><div class="quick-value">default</div></div><div class="quick-tile active"><div class="quick-label">Tools</div><div class="quick-value">on</div></div><div class="quick-tile"><div class="quick-label">Memory</div><div class="quick-value">manual</div></div><div class="quick-tile"><div class="quick-label">Cron</div><div class="quick-value">idle</div></div><div class="quick-tile active"><div class="quick-label">Safety</div><div class="quick-value">gate</div></div><div class="quick-tile"><div class="quick-label">Workspace</div><div class="quick-value">CoOS</div></div><div class="quick-tile"><div class="quick-label">Skin</div><div class="quick-value">locked</div></div></section>
+  </main>
+</body>
+</html>

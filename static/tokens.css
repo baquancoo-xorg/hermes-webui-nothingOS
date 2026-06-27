@@ -1,0 +1,69 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   NothingOS design tokens — single source of truth.
+   Loaded BEFORE style.css. Dark-only, monochrome-first, one red accent.
+   Spec: ref/nothingos-webui-rewrite-spec.md §4.1–4.6.
+
+   No pirated fonts: dot-matrix identity is built with CSS (radial-gradient),
+   not an "NDot" font. UI/mono stacks fall back to system fonts + JetBrains Mono.
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: dark;
+
+  /* 4.1 Color */
+  --os-bg: #0b0b0a;
+  --os-bg-2: #11110f;
+  --os-panel: #161613;
+  --os-panel-2: #1d1d19;
+  --os-raised: #24241f;
+  --os-text: #f2f0e8;
+  --os-text-soft: #c9c5b8;
+  --os-muted: #8b877b;
+  --os-faint: #5b574e;
+  --os-line: rgba(242, 240, 232, .13);
+  --os-line-strong: rgba(242, 240, 232, .22);
+  --os-dot: rgba(242, 240, 232, .16);
+  --os-red: #ff3b30;
+  --os-red-deep: #b81812;
+  --os-red-soft: rgba(255, 59, 48, .14);
+
+  /* 4.2 Typography — system stacks (no licensed Geist/dot font shipped) */
+  --font-ui: "Geist", "Satoshi", "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  /* Dot identity = same mono stack; dot rendering is CSS, not a font. */
+  --font-dot: var(--font-mono);
+  --tracking-eyebrow: .22em;
+
+  /* 4.3 Grid / spacing / radius — industrial, not bubbly.
+     Radii are namespaced --os-radius-* so they do NOT collide with style.css's
+     existing --radius-sm/md/lg scale (which legacy components still rely on).
+     Spacing 1–4 intentionally match style.css; 6/8/12 are additive. */
+  --os-grid-unit: 8px;
+  --os-space-1: 4px;
+  --os-space-2: 8px;
+  --os-space-3: 12px;
+  --os-space-4: 16px;
+  --os-space-6: 24px;
+  --os-space-8: 32px;
+  --os-space-12: 48px;
+  --os-radius-sm: 10px;
+  --os-radius-md: 16px;
+  --os-radius-lg: 24px;
+  --os-radius-xl: 32px;
+
+  /* 4.4 Surface treatment — depth from borders + nested panels, not drop shadow */
+  --os-surface-bg:
+    linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .015)),
+    var(--os-panel);
+  --os-surface-inset: inset 0 1px 0 rgba(255, 255, 255, .06);
+
+  /* 4.5 Dot texture (pseudo-elements only; opacity < .28; pointer-events: none) */
+  --os-dot-size: 12px;
+  --os-dot-grid: radial-gradient(circle, var(--os-dot) 1px, transparent 1px);
+
+  /* 4.6 Motion — opacity / transform / status-strip position only */
+  --ease-os: cubic-bezier(.16, 1, .3, 1);
+  --ease-snap: cubic-bezier(.22, .61, .36, 1);
+  --dur-fast: 120ms;
+  --dur-ui: 220ms;
+  --dur-slow: 700ms;
+}

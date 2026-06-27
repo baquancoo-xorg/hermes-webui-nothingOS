@@ -17,7 +17,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Hermes">
 <link rel="apple-touch-icon" sizes="512x512" href="static/apple-touch-icon.png">
-<script>(function(){try{var themes={light:1,dark:1,system:1},skins={default:1,nothing:1,ares:1,mono:1,graphite:1,slate:1,poseidon:1,sisyphus:1,charizard:1,sienna:1,catppuccin:1,hepburn:1,nous:1,'geist-contrast':1,neon:1,zeus:1},legacy={slate:['dark','slate'],solarized:['dark','poseidon'],monokai:['dark','sisyphus'],nord:['dark','slate'],oled:['dark','default']},t=(localStorage.getItem('hermes-theme')||'dark').toLowerCase(),s=(localStorage.getItem('hermes-skin')||'nothing').toLowerCase(),m=legacy[t],theme=m?m[0]:(themes[t]?t:'dark'),skin=skins[s]?s:(m?m[1]:'nothing');localStorage.setItem('hermes-theme',theme);localStorage.setItem('hermes-skin',skin);if(theme==='system')theme=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';if(theme==='dark')document.documentElement.classList.add('dark');if(skin!=='default')document.documentElement.dataset.skin=skin;}catch(e){document.documentElement.classList.add('dark');}})()</script>
+<!-- Single-skin fork: lock pre-paint appearance to NothingOS dark. Overwrites any
+     stale localStorage so old theme/skin values cannot flash or persist. -->
+<script>(function(){try{localStorage.setItem('hermes-theme','dark');localStorage.setItem('hermes-skin','nothingos');document.documentElement.classList.add('dark');document.documentElement.dataset.skin='nothingos';}catch(e){document.documentElement.classList.add('dark');}})()</script>
 <script>(function(){try{var fs=localStorage.getItem('hermes-font-size');if(fs&&fs!=='default')document.documentElement.dataset.fontSize=fs;}catch(e){}})()</script>
 <!-- theme-color: surfaces the active app chrome color to native status bars (Safari status bar, PWA, native WKWebView wrappers). Updated dynamically by boot.js when theme/skin changes. The light/dark default values match style.css :root --sidebar / :root.dark --sidebar. -->
 <meta name="theme-color" content="#FAF7F0" media="(prefers-color-scheme: light)">
@@ -68,6 +70,7 @@
     };
   }
 })()</script>
+<link rel="stylesheet" href="static/tokens.css?v=__WEBUI_VERSION__">
 <link rel="stylesheet" href="static/style.css?v=__WEBUI_VERSION__&amp;profile-project-badges=1">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" integrity="sha384-LJcOxlx9IMbNXDqJ2axpfEQKkAYbFjJfhXexLfiRJhjDU81mzgkiQq8rkV0j6dVh" crossorigin="anonymous">
   <!-- KaTeX math rendering CSS (loaded eagerly from vendored assets to prevent font CSP noise) -->
@@ -147,6 +150,13 @@
     </svg>
   </button>
 </header>
+<!-- NothingOS AmbientStatusStrip — agent state expressed as ambient light, not a
+     noisy banner. Filled in Phase 5; markup/feed wired there. -->
+<section class="os-ambient" id="osAmbient" data-state="idle" aria-label="Agent status">
+  <div class="os-ambient-label" id="osAmbientLabel">HERMES OS / SINGLE SKIN</div>
+  <div class="os-ambient-pulse" id="osAmbientPulse" aria-hidden="true"></div>
+  <div class="os-ambient-state" id="osAmbientState">IDLE</div>
+</section>
 <div class="layout">
   <nav class="rail" aria-label="Primary navigation">
     <button class="rail-btn nav-tab active has-tooltip" data-panel="chat" onclick="switchPanel('chat',{fromRailClick:true})" data-tooltip="Chat" data-i18n-title="tab_chat" aria-label="Chat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
@@ -1027,36 +1037,11 @@
                 <div class="settings-section-meta" data-i18n="settings_section_appearance_meta">Theme, accent colors, and visual style.</div>
               </div>
             </div>
-            <div class="settings-field">
-              <label data-i18n="settings_label_theme">Theme</label>
-              <div id="themePickerGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px">
-                <button type="button" data-theme-val="light" onclick="_pickTheme('light')" class="theme-pick-btn" style="border:1px solid var(--border2);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;background:none;transition:all .15s">
-                  <div style="width:100%;height:40px;border-radius:6px;background:#fff;border:1px solid rgba(0,0,0,.12);margin-bottom:6px;display:flex;align-items:center;justify-content:center">
-                    <svg width="16" height="16" fill="none" stroke="#999" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                  </div>
-                  <span style="font-size:12px;font-weight:500;color:var(--text)">Light</span>
-                </button>
-                <button type="button" data-theme-val="dark" onclick="_pickTheme('dark')" class="theme-pick-btn" style="border:1px solid var(--border2);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;background:none;transition:all .15s">
-                  <div style="width:100%;height:40px;border-radius:6px;background:#1a1a2e;border:1px solid rgba(255,255,255,.1);margin-bottom:6px;display:flex;align-items:center;justify-content:center">
-                    <svg width="16" height="16" fill="none" stroke="#666" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
-                  </div>
-                  <span style="font-size:12px;font-weight:500;color:var(--text)">Dark</span>
-                </button>
-                <button type="button" data-theme-val="system" onclick="_pickTheme('system')" class="theme-pick-btn" style="border:1px solid var(--border2);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;background:none;transition:all .15s">
-                  <div style="width:100%;height:40px;border-radius:6px;background:linear-gradient(to right,#fff,#1a1a2e);border:1px solid rgba(0,0,0,.12);margin-bottom:6px;display:flex;align-items:center;justify-content:center">
-                    <svg width="16" height="16" fill="none" stroke="#888" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-                  </div>
-                  <span style="font-size:12px;font-weight:500;color:var(--text)">System</span>
-                </button>
-              </div>
-              <input type="hidden" id="settingsTheme" value="dark">
-            </div>
-            <div class="settings-field">
-              <label data-i18n="settings_label_skin">Skin</label>
-              <div id="skinPickerGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px">
-              </div>
-              <input type="hidden" id="settingsSkin" value="default">
-            </div>
+            <!-- Single-skin fork: Theme + Skin pickers removed. NothingOS dark is the
+                 only design language. Hidden inputs keep boot.js/panels.js autosave
+                 paths working with locked values. -->
+            <input type="hidden" id="settingsTheme" value="dark">
+            <input type="hidden" id="settingsSkin" value="nothingos">
                         <div class="settings-field">
               <label data-i18n="settings_label_font_size">Font size</label>
               <div id="fontSizePickerGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-top:4px">
@@ -1513,6 +1498,9 @@
     </div>
   </aside>
 </div>
+<!-- NothingOS QuickCommandTray — control tiles for model/profile/tools/etc.
+     Placeholder; tiles + bindings wired in Phase 5. Skin tile is locked. -->
+<section class="os-quick" id="osQuick" aria-label="Quick command tray"></section>
 <div class="onboarding-overlay" id="onboardingOverlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle">
   <div class="onboarding-card">
     <div class="onboarding-shell">
@@ -1563,6 +1551,7 @@
 <script src="static/panels.js?v=__WEBUI_VERSION__&amp;profile-project-badges=1" defer></script>
 <script src="static/onboarding.js?v=__WEBUI_VERSION__" defer></script>
 <script src="static/boot.js?v=__WEBUI_VERSION__" defer></script>
+<script src="static/os-widgets.js?v=__WEBUI_VERSION__" defer></script>
 
 <!-- Kanban: create/rename board modal — used for both flows. -->
 <div class="kanban-modal-overlay" id="kanbanBoardModal" hidden onclick="if(event.target===this)closeKanbanBoardModal()">

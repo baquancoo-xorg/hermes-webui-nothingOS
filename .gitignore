@@ -17,9 +17,8 @@ __pycache__/
 .venv/
 venv/
 
-# Node (frontend source builds here; dist/ IS committed)
+# Node
 node_modules/
-frontend/node_modules/
 
 # Runtime state
 *.log
@@ -27,3 +26,6 @@ frontend/node_modules/
 
 # Local QA artifacts
 qa-artifacts/
+
+# macOS
+.DS_Store

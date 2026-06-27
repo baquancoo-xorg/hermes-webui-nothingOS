@@ -4716,36 +4716,33 @@ def handle_get(handler, parsed) -> bool:
     if parsed.path in ("/session/manifest.json", "/session/manifest.webmanifest"):
         return _serve_manifest(handler)
 
-    # ── Root + legacy deep-links → v2 SPA (v1 shell retired) ──
-    # bootstrapCsrf (v2) fetches "/" and treats a redirect to /login as "not
-    # logged in". So when auth is on and the cookie is missing/invalid we must
-    # send the client to /login (not /v2/) — otherwise it reads csrfToken:"" and
-    # wrongly believes auth is disabled (infinite /login redirect loop).
+    # ── Root + deep-links → v1 static shell (NothingOS) ──
+    # Serve static/index.html with CSRF/version/upload-limit injected. When auth
+    # is on and the cookie is missing/invalid we redirect to /login first so the
+    # shell never boots with csrfToken:"" (which would loop on /login).
     if parsed.path in ("/", "/index.html") or parsed.path.startswith("/session/"):
-        from api.frontend_v2 import is_logged_in
-        dest = "/v2/" if is_logged_in(handler) else "/login"
-        handler.send_response(302)
-        handler.send_header("Location", dest)
-        handler.send_header("Content-Length", "0")
-        handler.end_headers()
-        return True
-    if False:  # legacy v1 shell (disabled, kept for reference)
+        csrf_token = ""
+        try:
+            from api.auth import csrf_token_for_session, is_auth_enabled, parse_cookie, verify_session
+
+            if is_auth_enabled():
+                cookie_val = parse_cookie(handler)
+                if cookie_val and verify_session(cookie_val):
+                    csrf_token = csrf_token_for_session(cookie_val) or ""
+                else:
+                    handler.send_response(302)
+                    handler.send_header("Location", "/login")
+                    handler.send_header("Content-Length", "0")
+                    handler.end_headers()
+                    return True
+        except Exception:
+            csrf_token = ""
+
         try:
             from urllib.parse import quote
             from api.updates import WEBUI_VERSION
             version_token = quote(WEBUI_VERSION, safe="")
             from api.extensions import inject_extension_tags
-
-            csrf_token = ""
-            try:
-                from api.auth import csrf_token_for_session, is_auth_enabled, parse_cookie, verify_session
-
-                if is_auth_enabled():
-                    cookie_val = parse_cookie(handler)
-                    if cookie_val and verify_session(cookie_val):
-                        csrf_token = csrf_token_for_session(cookie_val) or ""
-            except Exception:
-                csrf_token = ""
 
             html = (
                 _INDEX_HTML_PATH.read_text(encoding="utf-8")
@@ -4762,12 +4759,6 @@ def handle_get(handler, parsed) -> bool:
             return _serve_shell_unavailable(handler, exc)
 
     if parsed.path == "/login":
-        # Serve the v2 SPA shell directly. bootstrapCsrf landed here via a
-        # redirect from "/", reads pathname startsWith "/login" → unauthed →
-        # shows the v2 LoginPage. No further redirect (avoids nesting loop).
-        from api import frontend_v2
-        return frontend_v2._serve_shell(handler)
-    if False:  # legacy v1 /login (disabled)
         _settings = load_settings()
         _bn = _html.escape(_settings.get("bot_name") or "Hermes")
         _lang = _settings.get("language", "en")
@@ -5024,11 +5015,6 @@ def handle_get(handler, parsed) -> bool:
         from api.extensions import serve_extension_static
 
         return serve_extension_static(handler, parsed)
-
-    # ── Embedded WebUI v2 SPA (single-process; replaces Node static-server) ──
-    if parsed.path == "/v2" or parsed.path.startswith("/v2/"):
-        from api import frontend_v2
-        return frontend_v2.serve(handler, parsed)
 
     if parsed.path.startswith("/static/"):
         return _serve_static(handler, parsed)

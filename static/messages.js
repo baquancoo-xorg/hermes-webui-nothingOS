@@ -1855,6 +1855,8 @@ function attachLiveStream(activeSid, streamId, uploaded=[], options={}){
     source.addEventListener('tool',e=>{
       const d=JSON.parse(e.data);
       if(d.name==='clarify') return;
+      // NothingOS ambient: reflect tool execution as the tool_running state.
+      if(typeof osAmbientState==='function') osAmbientState('tool_running');
       const tc={name:d.name, preview:d.preview||'', args:d.args||{}, snippet:'', done:false, tid:d.tid||`live-${Date.now()}-${Math.random().toString(36).slice(2,8)}`};
       const inflight = INFLIGHT[activeSid] || (INFLIGHT[activeSid] = {
         messages:[...S.messages],
@@ -2429,6 +2431,8 @@ function attachLiveStream(activeSid, streamId, uploaded=[], options={}){
 
     source.addEventListener('apperror',e=>{
       if(_bailOutOfTerminalEventsFromStaleStream()) return;
+      // NothingOS ambient: reflect a server-side error as the error state.
+      if(typeof osAmbientState==='function') osAmbientState('error');
       _terminalStateReached=true;
       if(_persistTimer){clearTimeout(_persistTimer);_persistTimer=null;}
       _streamFinalized=true;
