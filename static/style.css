@@ -5728,12 +5728,14 @@ html[data-conversation-outline="enabled"] #outlineToggleBtn:not([hidden]){displa
 :root[data-skin="nothingos"] .preview-path,
 :root[data-skin="nothingos"] .token-usage,
 :root[data-skin="nothingos"] .session-lineage-count{font-family:var(--font-mono)!important;letter-spacing:.02em;}
-/* Brand mark: solid mono tile, no neon halo (spec §8 rejects neon glow). */
+/* Brand mark: dot-matrix "H" inherits ink color; bare, no tile/halo (spec §8 rejects neon glow). */
 :root[data-skin="nothingos"] .logo,
 :root[data-skin="nothingos"] .app-titlebar-icon{
-  background:var(--os-red)!important;color:#fff!important;border-radius:var(--os-radius-sm)!important;box-shadow:none!important;
+  background:transparent!important;color:var(--os-text)!important;border-radius:0!important;box-shadow:none!important;
 }
-:root[data-skin="nothingos"] .app-titlebar-icon svg{filter:grayscale(1) contrast(1.8);}
+:root[data-skin="nothingos"] .empty-logo{
+  background:transparent!important;border:none!important;color:var(--os-text)!important;box-shadow:none!important;
+}
 
 /* Surfaces: industrial radius + thin rule + inset highlight. No drop shadow,
    no dot strip across every card (spec §8: "dot background everywhere"). */
