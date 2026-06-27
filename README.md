@@ -1,4 +1,22 @@
-# Hermes Web UI
+# Hermes Web UI — NothingOS edition
+
+> **This is a NothingOS-styled fork of [nesquena/hermes-webui](https://github.com/nesquena/hermes-webui).**
+> It tracks the stable upstream backend + vanilla-JS shell, and layers on:
+> - **A single NothingOS design language** — dark monochrome, one red accent,
+>   dot-matrix identity, ambient status strip + quick command tray. The 16 legacy
+>   skins are removed; appearance is a simple **Light / Dark toggle** (default
+>   Dark, your choice is remembered) in Settings → Appearance.
+> - **Four extra backend features** carried over from the Tungbillee fork:
+>   agent-config inspection (`/api/agent-configs`), per-agent token cost
+>   (`/api/dash/cost`), board→profile roster (`/api/dash/roster`), and a team
+>   document library (`/api/library/*`).
+>
+> **Requirements:** Python **3.11+** (the server uses 3.10+ syntax; `bootstrap.py`
+> auto-selects a `python3.11`/`3.12`/`3.13` interpreter and refuses to build the
+> environment from an older one). Install by **`git clone`** so the version stamp
+> (`git describe`) is correct — this keeps the service-worker cache busting on
+> every deploy. There is **no React SPA and no `/v2` route**; `/` serves the
+> static shell directly.
 
 [Hermes Agent](https://hermes-agent.nousresearch.com/) is a sophisticated autonomous agent that lives on your server, accessed via a terminal or messaging apps, that remembers what it learns and gets more capable the longer it runs.
 
