@@ -9111,6 +9111,74 @@ def handle_get(handler, parsed) -> bool:
     if parsed.path == "/health":
         return _handle_health(handler, parsed)
 
+    # ── NothingOS extras (ported from Tungbillee): dashboard cost/roster,
+    #    company library, agent-config inspection. All read-only on GET. ──
+    if parsed.path == "/api/dash/cost":
+        # Per-agent token cost from claude -p jsonl (read-only).
+        from api.auth import is_auth_enabled, parse_cookie, verify_session
+        if is_auth_enabled():
+            cv = parse_cookie(handler)
+            if not (cv and verify_session(cv)):
+                return j(handler, {"error": "Authentication required"}, status=401)
+        qs = parse_qs(parsed.query or "")
+        board = (qs.get("board") or ["fullstack-coder"])[0]
+        assignee_by_task = {}
+        try:
+            import sqlite3
+            db = os.path.expanduser(f"~/.hermes/kanban/boards/{board}/kanban.db")
+            if os.path.isfile(db):
+                conn = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+                assignee_by_task = {r[0]: r[1] for r in conn.execute("SELECT id, assignee FROM tasks")}
+                conn.close()
+        except Exception:
+            assignee_by_task = {}
+        from api.dash_cost import compute_cost
+        return j(handler, compute_cost(assignee_by_task))
+
+    if parsed.path == "/api/dash/roster":
+        # Map a kanban board → profiles via team-factory registry.json (read-only).
+        from api.auth import is_auth_enabled, parse_cookie, verify_session
+        if is_auth_enabled():
+            cv = parse_cookie(handler)
+            if not (cv and verify_session(cv)):
+                return j(handler, {"error": "Authentication required"}, status=401)
+        qs = parse_qs(parsed.query or "")
+        board = (qs.get("board") or [""])[0].strip()
+        if not board:
+            return j(handler, {"error": "missing board"}, status=400)
+        from api.dash_roster import get_roster_for_board
+        return j(handler, get_roster_for_board(board))
+
+    if parsed.path == "/api/library/index":
+        from api.library import handle_library_index
+        return handle_library_index(handler, parsed)
+
+    if parsed.path == "/api/library/file":
+        from api.library import handle_library_file
+        return handle_library_file(handler, parsed)
+
+    if parsed.path == "/api/agent-configs":
+        from api.agent_config import list_agent_configs
+        return j(handler, list_agent_configs())
+
+    if parsed.path == "/api/agent-configs/memory-methods":
+        from api.agent_config import memory_read_methods
+        return j(handler, memory_read_methods())
+
+    if parsed.path == "/api/agent-configs/memory":
+        from api.agent_config import read_agent_memory
+        qs = parse_qs(parsed.query)
+        profile_name = str(qs.get("agent", qs.get("profile", [""]))[0] or "").strip()
+        team_name = str(qs.get("team", [""])[0] or "").strip()
+        store = str(qs.get("store", ["all"])[0] or "all").strip()
+        limit = qs.get("limit", [50])[0]
+        try:
+            return j(handler, read_agent_memory(profile_name=profile_name, team_name=team_name, store=store, limit=limit))
+        except ValueError as e:
+            return bad(handler, _sanitize_error(e), 400)
+        except FileNotFoundError as e:
+            return bad(handler, _sanitize_error(e), 404)
+
     if parsed.path == "/api/health/agent":
         payload = build_agent_health_payload()
         payload["gateway_chat"] = gateway_chat_config_status()
@@ -10554,6 +10622,12 @@ def handle_post(handler, parsed) -> bool:
     if parsed.path == "/api/workspace/upload":
         return handle_workspace_upload(handler)
 
+    # NothingOS extra: company library upload reads its own multipart body, so it
+    # must run BEFORE the generic read_body() below (same as the upload routes).
+    if parsed.path == "/api/library/upload":
+        from api.library import handle_library_upload
+        return handle_library_upload(handler)
+
     if parsed.path == "/api/transcribe":
         return handle_transcribe(handler)
 
@@ -10578,6 +10652,45 @@ def handle_post(handler, parsed) -> bool:
         if diag:
             diag.finish()
         raise
+
+    # ── NothingOS extras (POST, body-dependent) ──
+    if parsed.path == "/api/library/delete":
+        from api.library import handle_library_delete
+        return handle_library_delete(handler, body)
+
+    if parsed.path == "/api/library/notify":
+        from api.library import handle_library_notify
+        return handle_library_notify(handler, body)
+
+    if parsed.path == "/api/agent-configs/save":
+        name = str(body.get("name", "")).strip()
+        patch_data = body.get("patch") if isinstance(body.get("patch"), dict) else {}
+        confirm = bool(body.get("confirm"))
+        if not name:
+            return bad(handler, "name is required")
+        try:
+            from api.agent_config import save_agent_config
+            return j(handler, save_agent_config(name, patch_data, confirm=confirm))
+        except PermissionError as e:
+            return bad(handler, str(e), 409)
+        except ValueError as e:
+            return bad(handler, _sanitize_error(e), 400)
+        except FileNotFoundError as e:
+            return bad(handler, _sanitize_error(e), 404)
+        except RuntimeError as e:
+            return bad(handler, str(e), 409)
+
+    if parsed.path == "/api/agent-configs/test":
+        name = str(body.get("name", "")).strip()
+        if not name:
+            return bad(handler, "name is required")
+        try:
+            from api.agent_config import test_agent_config
+            return j(handler, test_agent_config(name))
+        except ValueError as e:
+            return bad(handler, _sanitize_error(e), 400)
+        except FileNotFoundError as e:
+            return bad(handler, _sanitize_error(e), 404)
 
     if parsed.path == "/api/escape/authorize":
         return _handle_escape_authorize(handler, parsed, body)
