@@ -14,13 +14,55 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-import venv
 import webbrowser
 from pathlib import Path
 
 
 INSTALLER_URL = "https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh"
 REPO_ROOT = Path(__file__).resolve().parent
+
+# Minimum Python required to RUN the server. The codebase uses PEP 604 union
+# syntax (`str | None`) in runtime modules without `from __future__ import
+# annotations`, so importing them on < 3.10 raises TypeError at import time —
+# the server starts "healthy" then chat/UI break, or the .venv build produces an
+# interpreter that cannot import api/*. CI tests 3.11–3.13, so 3.11 is the floor.
+MIN_PY = (3, 11)
+
+
+def _py_version_tuple(python_exe: str) -> tuple[int, int] | None:
+    """Return (major, minor) of an interpreter, or None if it can't be probed."""
+    try:
+        out = subprocess.run(
+            [python_exe, "-c", "import sys;print(f'{sys.version_info[0]} {sys.version_info[1]}')"],
+            capture_output=True, text=True, timeout=10,
+        )
+        if out.returncode != 0:
+            return None
+        major, minor = out.stdout.split()
+        return (int(major), int(minor))
+    except Exception:
+        return None
+
+
+def _find_supported_python() -> str | None:
+    """Find an interpreter >= MIN_PY, preferring the newest versioned binary.
+
+    Checks python3.13/3.12/3.11 by name first (these are unambiguous), then the
+    generic python3/python (often 3.9 on macOS/older distros — verified, not
+    assumed). Returns the path of the first one meeting MIN_PY, else None.
+    """
+    candidates = ["python3.13", "python3.12", "python3.11", "python3", "python"]
+    for name in candidates:
+        exe = shutil.which(name)
+        if not exe:
+            continue
+        ver = _py_version_tuple(exe)
+        if ver and ver >= MIN_PY:
+            return exe
+    # Fall back to the interpreter running this script if it qualifies.
+    if sys.version_info[:2] >= MIN_PY:
+        return sys.executable
+    return None
 
 
 def _load_repo_dotenv() -> None:
@@ -218,6 +260,12 @@ def discover_launcher_python(agent_dir: Path | None) -> str:
         candidate = REPO_ROOT / rel
         if candidate.exists():
             return str(candidate)
+    # Prefer a Python >= MIN_PY (versioned binary) over a bare `python3` that
+    # may be 3.9 — building the .venv from 3.9 silently produces an interpreter
+    # that cannot import the server's runtime modules (PEP 604 syntax).
+    supported = _find_supported_python()
+    if supported:
+        return supported
     return shutil.which("python3") or shutil.which("python") or sys.executable
 
 
@@ -275,17 +323,40 @@ def ensure_python_has_webui_deps(python_exe: str, agent_dir: Path | None = None)
         "Scripts/python.exe" if platform.system() == "Windows" else "bin/python"
     )
     if not venv_python.exists():
-        info(f"Creating local virtualenv at {venv_dir}")
-        # symlinks=True: some Python builds (notably mise/asdf shared-library
-        # installs on macOS) default venv to copy mode. The copied binary still
-        # uses @executable_path/../lib/libpython3.X.dylib for its load command,
-        # so the venv binary aborts with SIGABRT on first import because the
-        # dylib never gets copied into .venv/lib. Symlinking the interpreter
-        # keeps @executable_path resolving back to the original install.
-        # CPython's venv falls back to copy mode automatically when symlink
-        # creation fails (e.g. older Windows without SeCreateSymbolicLinkPrivilege),
-        # so this is safe to set unconditionally.
-        venv.EnvBuilder(with_pip=True, symlinks=True).create(venv_dir)
+        # Hard guard: never build the .venv from a Python < MIN_PY. Doing so
+        # yields an interpreter that imports cleanly at startup but crashes the
+        # server's runtime modules (PEP 604 `str | None`). Pick a supported
+        # interpreter, or fail loudly with actionable guidance (VN + EN).
+        base_python = python_exe
+        base_ver = _py_version_tuple(base_python)
+        if not base_ver or base_ver < MIN_PY:
+            supported = _find_supported_python()
+            if not supported:
+                want = f"{MIN_PY[0]}.{MIN_PY[1]}"
+                have = f"{base_ver[0]}.{base_ver[1]}" if base_ver else "?"
+                sys.exit(
+                    f"\n[bootstrap] Lỗi: cần Python >= {want} nhưng chỉ thấy {have}.\n"
+                    f"[bootstrap] Error: Python >= {want} required, found {have}.\n"
+                    f"  • macOS:  brew install python@{want}\n"
+                    f"  • Ubuntu: sudo apt install python{want} python{want}-venv\n"
+                    f"  • Rồi chạy lại / then re-run:  python{want} bootstrap.py\n"
+                )
+            base_python = supported
+            info(f"Using {base_python} (>= {MIN_PY[0]}.{MIN_PY[1]}) to build the virtualenv")
+        info(f"Creating local virtualenv at {venv_dir} (base: {base_python})")
+        # Build the venv with base_python's OWN `-m venv` (NOT in-process
+        # venv.EnvBuilder, which would clone whatever interpreter is running
+        # bootstrap.py — possibly 3.9). This guarantees the .venv has base_python's
+        # version. --symlinks: some Python builds (mise/asdf shared-library on
+        # macOS) default to copy mode; the copied binary still loads
+        # @executable_path/../lib/libpython3.X.dylib, which isn't copied, so it
+        # aborts on first import. Symlinking keeps @executable_path resolving back
+        # to the original install. CPython falls back to copy mode if symlink
+        # creation fails (older Windows), so it's safe unconditionally.
+        subprocess.run(
+            [base_python, "-m", "venv", "--symlinks", str(venv_dir)],
+            check=True,
+        )
 
     info("Installing WebUI dependencies into local virtualenv")
     subprocess.run(
