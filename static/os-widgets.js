@@ -1,14 +1,14 @@
-/* NothingOS shell components — ambient status, glance widgets, quick command tray.
+/* NothingOS shell widgets — ambient status and route-shell compatibility.
  *
- * Single-skin fork (Phase 5). This file is FEED-ONLY: it reads state that the
- * existing app already computes/renders (S.busy, approval card, composer chip
- * labels, gitBadge) and mirrors it into the three NothingOS surfaces added in
- * Phase 4. It creates NO new API calls and changes NO stream logic — it wraps a
- * few global functions to observe state transitions, then delegates to them.
+ * V2 keeps this file FEED-ONLY: it reads state that the existing app already
+ * computes/renders (S.busy, approval card, composer chip labels, gitBadge) and
+ * mirrors it into ambient/glance surfaces. It creates NO new API calls and
+ * changes NO stream logic — it wraps a few global functions to observe state
+ * transitions, then delegates to them.
  *
  * Surfaces it owns:
  *   #osAmbient  — AmbientStatusStrip (idle/thinking/tool_running/waiting_approval/error/complete)
- *   #osQuick    — QuickCommandTray (control tiles bound to existing composer chips)
+ *   #osQuick    — inert compatibility mount; V2 route controls live inside route surfaces
  *   .os-glance  — GlanceWidgets, injected into the workspace rightpanel
  */
 (function () {
@@ -97,49 +97,20 @@
   }
   window.osRenderGlance = renderGlance;
 
-  // ── QuickCommandTray ──────────────────────────────────────────────────────
-  // Each tile mirrors an existing composer chip and, on click, invokes the same
-  // handler the chip uses (DRY — no duplicated control logic). The Skin tile is
-  // locked: single-skin fork has no theme switching.
-  var TILES = [
-    { key: 'model', label: 'Model', chip: 'composerModelLabel', action: 'toggleModelDropdown', active: true },
-    { key: 'workspace', label: 'Workspace', chip: 'composerWorkspaceLabel', action: 'toggleComposerWsDropdown' },
-    { key: 'tools', label: 'Tools', chip: 'composerToolsetsLabel', action: 'toggleToolsetsDropdown', active: true },
-    { key: 'reasoning', label: 'Reasoning', chip: 'composerReasoningLabel', action: 'toggleReasoningDropdown' },
-    { key: 'profile', label: 'Profile', value: 'default' },
-    { key: 'memory', label: 'Memory', value: 'manual' },
-    { key: 'safety', label: 'Safety', value: 'gate', active: true },
-    { key: 'skin', label: 'Skin', value: 'locked', locked: true },
-  ];
-
+  // ── RouteCommandDock compatibility mount ───────────────────────────────────
+  // V2 removes the persistent global QuickCommandTray. Keep #osQuick as an inert
+  // mount for old tests/extensions, but do not build global MODEL/WORKSPACE tiles.
   function buildTray() {
     var tray = $('osQuick');
-    if (!tray || tray.childElementCount) return;
-    TILES.forEach(function (t) {
-      var tile = document.createElement('button');
-      tile.type = 'button';
-      tile.className = 'os-quick-tile' + (t.active ? ' active' : '') + (t.locked ? ' locked' : '');
-      tile.id = 'osTile_' + t.key;
-      if (t.locked) tile.disabled = true;
-      tile.innerHTML =
-        '<span class="os-quick-label">' + t.label + '</span>' +
-        '<span class="os-quick-value" id="osTileVal_' + t.key + '">' + (t.value || '—') + '</span>';
-      if (!t.locked && t.action) {
-        tile.addEventListener('click', function () {
-          if (typeof window[t.action] === 'function') window[t.action]();
-        });
-      }
-      tray.appendChild(tile);
-    });
-    refreshTray();
+    if (!tray) return;
+    tray.hidden = true;
+    tray.setAttribute('aria-hidden', 'true');
+    tray.innerHTML = '';
   }
 
   function refreshTray() {
-    TILES.forEach(function (t) {
-      if (!t.chip) return;
-      var val = $('osTileVal_' + t.key);
-      if (val) val.textContent = _chipText(t.chip, '—');
-    });
+    var tray = $('osQuick');
+    if (tray) tray.hidden = true;
   }
   window.osRefreshTray = refreshTray;
 

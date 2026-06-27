@@ -383,12 +383,12 @@ _installPwaSidebarSwipeGesture();
 //   (1) Click the already-active rail icon → collapse / expand the sidebar.
 //   (2) Cmd/Ctrl+B keyboard shortcut (VS Code convention).
 // Mobile is unaffected: the sidebar is an overlay there, and every collapse
-// code path is gated on `_isDesktopWidth()` (min-width:641px).
+// code path is gated on `_isDesktopWidth()` (min-width:768px).
 // State is persisted via localStorage and survives reloads + bfcache.
 const _SIDEBAR_COLLAPSED_KEY='hermes-webui-sidebar-collapsed';
 
 function _isDesktopWidth(){
-  try{return window.matchMedia('(min-width:641px)').matches;}catch(_){return true;}
+  try{return window.matchMedia('(min-width:768px)').matches;}catch(_){return true;}
 }
 
 function _isSidebarCollapsed(){

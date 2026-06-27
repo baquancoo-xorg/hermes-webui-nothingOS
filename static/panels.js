@@ -578,22 +578,34 @@ async function loadCrons(animate) {
       const status = _cronStatusMeta(job);
       (status.state === 'paused' ? _pausedJobs : _activeJobs).push({ job, status });
     }
+    const _cronListDate = (value) => {
+      if (!value) return '';
+      try { return new Date(value).toLocaleString(); } catch (_) { return String(value); }
+    };
     const _appendCronItem = (parent, { job, status }) => {
       const item = document.createElement('div');
       item.className = 'cron-item';
       item.id = 'cron-' + job.id;
       const isNewRun = _cronNewJobIds.has(String(job.id));
-      const isAgentMode = !job.no_agent;
       const profileLabel = _cronProfileLabel(job.profile);
       const profileTitle = _cronProfileTitle(job.profile);
+      const scheduleLabel = job.schedule_display || (job.schedule && job.schedule.expression) || job.repeat || '';
+      const nextLabel = _cronListDate(job.next_run_at);
+      const lastLabel = _cronListDate(job.last_run_at);
+      const metaParts = [];
+      if (scheduleLabel) metaParts.push(scheduleLabel);
+      if (nextLabel) metaParts.push(`${t('cron_next') || 'Next'} ${nextLabel}`);
+      if (lastLabel) metaParts.push(`${t('cron_last') || 'Last'} ${lastLabel}`);
+      const metaHtml = metaParts.length ? `<div class="cron-card-meta">${esc(metaParts.join(' · '))}</div>` : '';
       item.innerHTML = `
         <div class="cron-header">
           ${isNewRun ? '<span class="cron-new-dot" title="New run"></span>' : ''}
-          ${isAgentMode ? '<span class="cron-agent-badge" title="Agent mode">🤖</span>' : `<span class="cron-script-badge" title="${esc(t('cron_script_badge_title') || 'Script job (no agent)')}">📜</span>`}
+          <span class="cron-job-index" aria-hidden="true">${esc(String(parent.children.length + 1).padStart(2, '0'))}</span>
           <span class="cron-name" title="${esc(job.name)}">${esc(job.name)}</span>
           <span class="cron-profile-badge" title="${esc(profileTitle)}">${esc(profileLabel)}</span>
-          <span class="cron-status ${status.listClass}">${esc(status.label)}</span>
-        </div>`;
+          <span class="cron-status os-led ${status.listClass}">${esc(status.label)}</span>
+        </div>
+        ${metaHtml}`;
       item.onclick = () => openCronDetail(job.id, item);
       if (_currentCronDetail && _currentCronDetail.id === job.id) item.classList.add('active');
       parent.appendChild(item);
