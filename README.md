@@ -16,14 +16,8 @@ agent state as light, and OS-style glance widgets. Built on the stable
       <sub>Light theme — same design language, inverted surfaces</sub>
     </td>
     <td width="50%" align="center">
-      <img alt="Kanban route with collapsed Filters &amp; Dispatch" src="assets/screenshots/nothingos-kanban.png" /><br />
-      <sub>Kanban route — advanced filters collapse into a disclosure</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2">
-      <img alt="Mobile single-surface layout at 390px" src="assets/screenshots/nothingos-mobile.png" width="300" /><br />
-      <sub>Mobile — every route is a full-width single surface (390px, no overflow)</sub>
+      <img alt="Mobile single-surface layout at 390px" src="assets/screenshots/nothingos-mobile.png" /><br />
+      <sub>Mobile — full-width single surface (390px, no overflow)</sub>
     </td>
   </tr>
 </table>
@@ -58,6 +52,76 @@ agent state as light, and OS-style glance widgets. Built on the stable
 - **No React SPA, no `/v2` route** — `/` serves the static shell directly.
 - **Everything else** (chat, sessions, workspace browser, profiles, cron, skills,
   memory, voice) comes from the stable upstream and works as-is.
+
+---
+
+## Screens
+
+Every route shares the one command-surface language — a mono ambient strip up top,
+an icon rail on the left, an OS surface in the middle. Captured at 1440px, dark.
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img alt="Chat" src="assets/screenshots/nothingos-dark.png" /><br />
+      <sub><b>Chat</b> — OS empty-state, command-line composer</sub>
+    </td>
+    <td width="50%" align="center">
+      <img alt="Kanban" src="assets/screenshots/nothingos-kanban.png" /><br />
+      <sub><b>Kanban</b> — work queue; filters collapse into a disclosure</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img alt="Cron / Tasks" src="assets/screenshots/route-cron.png" /><br />
+      <sub><b>Cron / Tasks</b> — scheduled jobs with LED status</sub>
+    </td>
+    <td align="center">
+      <img alt="Memory" src="assets/screenshots/route-memory.png" /><br />
+      <sub><b>Memory</b> — sectioned reader, neutral code chips</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img alt="Workspaces" src="assets/screenshots/route-workspaces.png" /><br />
+      <sub><b>Workspaces</b> — tactile file rows, Files/Artifacts segments</sub>
+    </td>
+    <td align="center">
+      <img alt="Skills" src="assets/screenshots/route-skills.png" /><br />
+      <sub><b>Skills</b> — grouped list with enable toggles</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img alt="Profiles" src="assets/screenshots/route-profiles.png" /><br />
+      <sub><b>Profiles</b> — agent profiles, red index on the active row</sub>
+    </td>
+    <td align="center">
+      <img alt="Todos" src="assets/screenshots/route-todos.png" /><br />
+      <sub><b>Todos</b> — current task list with status glyphs</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img alt="Insights" src="assets/screenshots/route-insights.png" /><br />
+      <sub><b>Insights</b> — usage analytics on OS surfaces</sub>
+    </td>
+    <td align="center">
+      <img alt="Logs" src="assets/screenshots/route-logs.png" /><br />
+      <sub><b>Logs</b> — mono rows, severity as a left LED bar</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img alt="Settings" src="assets/screenshots/route-settings.png" /><br />
+      <sub><b>Settings</b> — grouped rows, thin red selection</sub>
+    </td>
+    <td align="center">
+      <img alt="Settings (light)" src="assets/screenshots/route-settings-light.png" /><br />
+      <sub><b>Settings (light)</b> — same layout, inverted surfaces</sub>
+    </td>
+  </tr>
+</table>
 
 ---
 

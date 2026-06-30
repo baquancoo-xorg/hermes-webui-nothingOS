@@ -5713,7 +5713,10 @@ html[data-conversation-outline="enabled"] #outlineToggleBtn:not([hidden]){displa
 :root[data-skin="nothingos"] .rightpanel,
 :root[data-skin="nothingos"] .topbar,
 :root[data-skin="nothingos"] .composer-wrap{
-  background:color-mix(in srgb,var(--sidebar) 92%,transparent)!important;border-color:var(--border)!important;box-shadow:none!important;backdrop-filter:blur(18px) saturate(1.08);
+  /* Composer dock shares the chat surface — no raised panel, no blur tile.
+     Depth comes only from a thin top rule + the composer-box itself. The grey
+     "floating block" came from filling this with --sidebar; transparent fixes it. */
+  background:transparent!important;border-top:1px solid var(--os-line)!important;border-color:var(--os-line)!important;box-shadow:none!important;backdrop-filter:none!important;
 }
 :root[data-skin="nothingos"] .main,
 :root[data-skin="nothingos"] .chat,
