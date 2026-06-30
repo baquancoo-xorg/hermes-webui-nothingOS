@@ -5679,6 +5679,13 @@ html[data-conversation-outline="enabled"] #outlineToggleBtn:not([hidden]){displa
   --nothing-red-dot:radial-gradient(circle,var(--os-red-soft) 1px,transparent 1px);
   /* No heavy drop shadow — depth via borders + nested panels + inset highlight. */
   --nothing-panel-shadow:none;
+  /* V4 angular: define the --os-radius-* scale as 0 (it was never defined, so
+     every var(--os-radius-*) consumer emitted an invalid declaration) and zero
+     the legacy --radius-* scale too. The blanket *{border-radius:0} already
+     squares corners; this keeps the var-based declarations valid + consistent.
+     --radius-pill is intentionally left alone for the toggle-switch tracks. */
+  --os-radius-sm:0;--os-radius-md:0;--os-radius-lg:0;--os-radius-xl:0;
+  --radius-sm:0;--radius-md:0;--radius-card:0;--radius-lg:0;
 }
 :root.light[data-skin="nothingos"]{
   color-scheme:light;
@@ -6452,3 +6459,149 @@ html[data-conversation-outline="enabled"] #outlineToggleBtn:not([hidden]){displa
 }
 :root[data-skin="nothingos"] #logsOutput .log-line-debug{color:var(--os-muted);}
 /* ── end NothingOS V3 primitives ── */
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ── NothingOS V4 — angular technical shell ──
+   Make the shell read like the reference (ref/nothingos-webui-reference.png):
+   square corners everywhere, distinct bordered columns, stronger dot+glow,
+   a brand mark on the sidebar. CSS-only — no DOM/routing/mobile-JS changes.
+   Appended last so the cascade wins. Scoped to [data-skin="nothingos"].
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Square everything ─────────────────────────────────────────────────────
+   485+ corners are hardcoded px, so a token flip is not enough — zero them all,
+   then restore the handful that must stay circular (avatars, LEDs, toggle knobs,
+   round FABs, spinners). The restore rule sits AFTER, so it wins by cascade. */
+:root[data-skin="nothingos"] *,
+:root[data-skin="nothingos"] *::before,
+:root[data-skin="nothingos"] *::after{
+  border-radius:0 !important;
+}
+/* Restore circular elements (functionally round). */
+:root[data-skin="nothingos"] .app-titlebar-profile-icon,
+:root[data-skin="nothingos"] .role-icon,
+:root[data-skin="nothingos"] .os-led::before,
+:root[data-skin="nothingos"] .system-health-dot,
+:root[data-skin="nothingos"] .system-health-status,
+:root[data-skin="nothingos"] .mic-dot,
+:root[data-skin="nothingos"] .voice-mode-indicator,
+:root[data-skin="nothingos"] .workspace-prefs-dot,
+:root[data-skin="nothingos"] .pre-header::before,
+:root[data-skin="nothingos"] .cron-status.os-led::before,
+:root[data-skin="nothingos"] .cron-new-dot,
+:root[data-skin="nothingos"] .plugin-toggle-slider::before,
+:root[data-skin="nothingos"] .skill-toggle::after,
+:root[data-skin="nothingos"] .send-btn,
+:root[data-skin="nothingos"] .cancel-btn,
+:root[data-skin="nothingos"] .scroll-to-bottom-btn,
+:root[data-skin="nothingos"] .session-jump-btn,
+:root[data-skin="nothingos"] .img-lightbox-close,
+:root[data-skin="nothingos"] .img-lightbox-nav,
+:root[data-skin="nothingos"] .cron-watch-spinner,
+:root[data-skin="nothingos"] .detail-badge.running::before,
+:root[data-skin="nothingos"] .composer-profile-icon::after,
+:root[data-skin="nothingos"] .onboarding-step-index,
+:root[data-skin="nothingos"] .auth-warning-badge,
+:root[data-skin="nothingos"] .os-loader-dots > i{
+  border-radius:50% !important;
+}
+/* Toggle switch track stays a soft pill so the switch still reads as a switch. */
+:root[data-skin="nothingos"] .plugin-toggle-slider,
+:root[data-skin="nothingos"] .skill-toggle{
+  border-radius:999px !important;
+}
+
+/* ── 2. Distinct bordered columns with a gap (desktop) ────────────────────────
+   Reference = 3 panels separated by dark gaps, each framed by a 1px line. The
+   DOM is a flex row (.layout > .rail .sidebar .main .rightpanel); add a gap +
+   padding on desktop and give each column a full 1px frame. Mobile keeps the
+   V3 full-width single-surface (gap stays 0 below 768px). */
+@media (min-width:768px){
+  :root[data-skin="nothingos"] .layout{
+    gap:10px;padding:10px;background:transparent;
+  }
+  :root[data-skin="nothingos"] .rail,
+  :root[data-skin="nothingos"] .sidebar,
+  :root[data-skin="nothingos"] .main,
+  :root[data-skin="nothingos"] .rightpanel{
+    border:1px solid var(--os-line)!important;
+    /* Semi-opaque panel so the dot field shows faintly underneath (like the
+       reference) while text stays legible. */
+    background:linear-gradient(var(--os-panel-92,rgba(17,17,15,.92)),var(--os-panel-92,rgba(17,17,15,.92)))!important;
+  }
+  :root.light[data-skin="nothingos"] .rail,
+  :root.light[data-skin="nothingos"] .sidebar,
+  :root.light[data-skin="nothingos"] .main,
+  :root.light[data-skin="nothingos"] .rightpanel{
+    background:linear-gradient(rgba(251,250,245,.92),rgba(251,250,245,.92))!important;
+  }
+  /* Rail is a thin icon column; keep it framed but flush to the sidebar feel. */
+  :root[data-skin="nothingos"] .rail{
+    border-right:1px solid var(--os-line)!important;
+  }
+}
+/* Topbar + ambient strip stay full-width across the top (status line), framed
+   below by a hairline — they sit outside .layout so the gap padding doesn't
+   apply to them. */
+:root[data-skin="nothingos"] .os-ambient{
+  border-bottom:1px solid var(--os-line)!important;
+  background:var(--os-bg-2)!important;
+}
+
+/* ── 3. Stronger dot field + red glow ────────────────────────────────────────
+   V3's background was masked to one corner at .22 opacity AND sat at z-index:-2
+   behind an opaque body → invisible. Fix: paint the dot field + glow directly on
+   the body background (so it shows through the column gaps), and let the framed
+   columns sit on --os-surface-bg above it. The reference shows dots across the
+   whole canvas with a red glow bleeding from the top-left. */
+:root[data-skin="nothingos"] body{
+  background:
+    radial-gradient(circle at 9% 7%, var(--os-red-soft), transparent 32rem),
+    radial-gradient(circle at 94% 3%, rgba(255,255,255,.035), transparent 24rem),
+    var(--os-dot-grid),
+    var(--os-bg)!important;
+  background-size:auto, auto, var(--os-dot-size) var(--os-dot-size), auto!important;
+}
+/* The old corner-masked ::before is now redundant — neutralize it so it doesn't
+   double-darken the canvas. */
+:root[data-skin="nothingos"] body::before{
+  background:none!important;opacity:0!important;
+}
+
+/* ── 4. Sidebar brand mark ───────────────────────────────────────────────────
+   A framed identity tile at the top of the left column (reference shows the
+   dot-H + "COWORKOS / Command surface"). Additive markup; hidden on mobile where
+   the drawer is tight. */
+:root[data-skin="nothingos"] .os-brand{
+  display:flex;align-items:center;gap:12px;margin:10px;padding:14px;
+  border:1px solid var(--os-line-strong);background:var(--os-bg-2);
+}
+:root[data-skin="nothingos"] .os-brand-mark{color:var(--os-text);flex-shrink:0;}
+:root[data-skin="nothingos"] .os-brand-eyebrow{
+  font-size:9px;letter-spacing:.24em;color:var(--os-muted);margin-bottom:4px;
+}
+:root[data-skin="nothingos"] .os-brand-title{
+  font-size:15px;letter-spacing:-.01em;color:var(--os-text);line-height:1.1;
+}
+/* Desktop only — the sidebar is a full-screen drawer on mobile; the brand tile
+   would steal vertical space from the session list there. */
+@media (max-width:767px){
+  :root[data-skin="nothingos"] .os-brand{display:none;}
+}
+
+/* ── 5. Composer + chips square (keep position/handlers; just angular) ────────
+   The composer input stays exactly where it is (Sếp's requirement) — only the
+   rounded corners go. Chips were 999px pills; they are intentionally NOT in the
+   round-restore list, so the blanket rule already squares them. Re-assert the
+   command-line focus marker so it survives the blanket rule. */
+:root[data-skin="nothingos"] #composerBox{
+  border:1px solid var(--os-line-strong)!important;
+}
+:root[data-skin="nothingos"] .composer-model-chip,
+:root[data-skin="nothingos"] #profileChip,
+:root[data-skin="nothingos"] #composerWorkspaceChip,
+:root[data-skin="nothingos"] #composerToolsetsChip,
+:root[data-skin="nothingos"] .composer-reasoning-chip{
+  border:1px solid var(--os-line)!important;
+}
+/* ── end NothingOS V4 ── */
