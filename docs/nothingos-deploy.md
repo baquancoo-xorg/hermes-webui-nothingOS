@@ -34,6 +34,40 @@ Giả định service hiện tại chạy qua systemd/`ctl.sh` tại một thư 
    mở trình duyệt, **hard reload** (Cmd/Ctrl+Shift+R) lần đầu để service worker
    nạp cache mới (tránh trang trắng do cache cũ thời v2).
 
+## Phát hành & Cập nhật (Releasing & Updates)
+
+WebUI **đã có sẵn** banner thông báo cập nhật trong app (nút **Update Now**). Nó so
+HEAD đang chạy với **release tag mới nhất** dạng `vX.Y.Z-nothingos`. Banner chỉ im
+lặng khi fork **chưa cắt tag mới** — nên "phát hành một bản" = "push một tag".
+
+### Cắt một bản phát hành
+```bash
+scripts/release.sh 1.1.0                 # tạo + push tag v1.1.0-nothingos
+scripts/release.sh 1.1.0 --gh-release    # kèm GitHub Release (auto changelog, cần gh)
+scripts/release.sh 1.1.0 --dry-run       # chỉ in lệnh, không tạo tag
+```
+Script tự kiểm tra trước khi tag: đang ở `main`, tracked files sạch, `main` local ==
+`origin/main`, version đúng định dạng `X.Y.Z`, và tag chưa tồn tại. Tag là annotated,
+trỏ vào HEAD đã push. Version stamp (`WEBUI_VERSION`) lấy từ `git describe --tags` nên
+tự cập nhật theo tag mới — không cần sửa code.
+
+### Banner quyết định thế nào
+- **Người cài đúng tag** (`git checkout vX.Y.Z-nothingos`): thấy banner khi có tag mới
+  hơn → theo **bản ổn định**.
+- **Người clone `main`** (HEAD đã vượt tag): updater tự chuyển sang so `origin/main` →
+  thấy banner theo **từng commit** push lên main. Cả hai do engine xử lý tự động.
+
+### "Update Now" làm gì
+`git fetch` + `git pull --ff-only` tới ref đích, rồi server tự khởi động lại. Thay đổi
+cục bộ được stash/restore; nếu lịch sử đã rẽ nhánh (diverged) thì pull fail an toàn và
+hiện nút **Force update** (reset cứng về remote — sẽ mất commit local).
+
+### ⚠️ Lưu ý Docker
+Với bản chạy bằng **Docker image** dựng sẵn, "Update Now" chạy `git pull` *bên trong
+container* và **không persist** sau khi container restart (image bất biến). Người dùng
+Docker phải cập nhật bằng `docker pull` image mới / rebuild, không dùng nút trong app.
+Updater không nhận biết Docker cho repo webui.
+
 ## Rollback
 Bản cũ (Tungbillee + v2 SPA) được giữ ở nhánh `archive/tungbillee-nothingos`.
 ```bash

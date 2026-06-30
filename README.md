@@ -193,6 +193,19 @@ change it back.
 
 ---
 
+## Updating
+
+The WebUI checks for new releases on startup and shows an in-app banner with an
+**Update Now** button when this repo has a newer version. Clicking it runs
+`git fetch` + `git pull --ff-only` and restarts the server — no reinstall needed.
+
+Maintainers cut a release by pushing a tag (`scripts/release.sh X.Y.Z`); that's
+what makes the banner appear for everyone else. Full release + update flow,
+including the Docker caveat, is in
+[`docs/nothingos-deploy.md`](docs/nothingos-deploy.md#phát-hành--cập-nhật-releasing--updates).
+
+---
+
 ## Remote access
 
 The server binds to `127.0.0.1` by default. To reach it from another machine:
