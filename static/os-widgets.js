@@ -28,12 +28,20 @@
   var _completeTimer = null;
 
   function setAmbient(state) {
-    var el = $('osAmbient');
-    if (!el) return;
     if (!AMBIENT_LABELS[state]) state = 'idle';
-    el.dataset.state = state;
-    var label = $('osAmbientState');
-    if (label) label.textContent = AMBIENT_LABELS[state];
+    var el = $('osAmbient');
+    if (el) {
+      el.dataset.state = state;
+      var label = $('osAmbientState');
+      if (label) label.textContent = AMBIENT_LABELS[state];
+    }
+    // V4: the same state also drives the merged top status bar. Mirror it.
+    var top = $('osTopbarState');
+    if (top) {
+      top.dataset.state = state;
+      var tl = $('osTopbarStateLabel');
+      if (tl) tl.textContent = AMBIENT_LABELS[state];
+    }
     // "complete" is a one-shot sweep that settles back to idle.
     if (_completeTimer) { clearTimeout(_completeTimer); _completeTimer = null; }
     if (state === 'complete') {

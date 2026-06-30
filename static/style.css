@@ -6493,8 +6493,6 @@ html[data-conversation-outline="enabled"] #outlineToggleBtn:not([hidden]){displa
 :root[data-skin="nothingos"] .skill-toggle::after,
 :root[data-skin="nothingos"] .send-btn,
 :root[data-skin="nothingos"] .cancel-btn,
-:root[data-skin="nothingos"] .scroll-to-bottom-btn,
-:root[data-skin="nothingos"] .session-jump-btn,
 :root[data-skin="nothingos"] .img-lightbox-close,
 :root[data-skin="nothingos"] .img-lightbox-nav,
 :root[data-skin="nothingos"] .cron-watch-spinner,
@@ -6603,5 +6601,78 @@ html[data-conversation-outline="enabled"] #outlineToggleBtn:not([hidden]){displa
 :root[data-skin="nothingos"] #composerToolsetsChip,
 :root[data-skin="nothingos"] .composer-reasoning-chip{
   border:1px solid var(--os-line)!important;
+}
+
+/* ── 6. Responsive chat width ─────────────────────────────────────────────────
+   --msg-max was a fixed 780px → cramped on wide screens. Scale it with the
+   viewport (~72% of the window) with a sane floor + ceiling so lines stay
+   readable on ultrawide and don't collapse on small windows. The message
+   column reads this var for its max-width. */
+:root[data-skin="nothingos"]{
+  --msg-max:clamp(680px, 72vw, 1100px);
+}
+
+/* ── 7. Remove the stray grey strip under the composer ───────────────────────
+   The legacy QuickCommandTray mount (#osQuick) is hidden but still rendered a
+   1px top border / residual box under the composer. Kill it outright in this
+   skin (V3 already removed its function — keep it visually gone too). */
+:root[data-skin="nothingos"] .os-quick{
+  display:none!important;border:0!important;background:none!important;padding:0!important;margin:0!important;
+}
+
+/* ── 8. Single merged top status bar ─────────────────────────────────────────
+   Collapse the two stacked bars (topbar + ambient strip) into ONE: the topbar
+   now carries [HERMES OS · title · IDLE]. The separate ambient strip is hidden;
+   its state is mirrored into #osTopbarState by os-widgets.js. The bar's inner
+   padding is aligned to the column grid edges (gap+padding = 10px) so the two
+   ends sit flush with the columns below, not jammed against the window edge. */
+:root[data-skin="nothingos"] .os-ambient{display:none!important;}
+:root[data-skin="nothingos"] .app-titlebar{
+  height:42px;justify-content:flex-start;gap:12px;
+  padding-left:max(20px,calc(env(safe-area-inset-left,0) + 20px))!important;
+  padding-right:max(20px,calc(env(safe-area-inset-right,0) + 20px))!important;
+  background:var(--os-bg-2)!important;border-bottom:1px solid var(--os-line)!important;
+}
+/* Left identity tag (mono, like the old ambient label). */
+:root[data-skin="nothingos"] .os-topbar-id{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--os-muted);white-space:nowrap;flex-shrink:0;
+}
+/* Center: the live page/conversation title (already fed by syncAppTitlebar). */
+:root[data-skin="nothingos"] .app-titlebar-inner{
+  flex:1 1 auto;justify-content:center;min-width:0;
+}
+:root[data-skin="nothingos"] .app-titlebar-title{
+  font-family:var(--font-mono)!important;font-weight:700!important;letter-spacing:.04em!important;
+  text-transform:uppercase;color:var(--os-text)!important;max-width:46vw;
+}
+:root[data-skin="nothingos"] .app-titlebar-sub{
+  font-family:var(--font-mono)!important;color:var(--os-faint)!important;
+}
+/* Right: merged ambient state + pulse. */
+:root[data-skin="nothingos"] .os-topbar-state{
+  display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:auto;
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--os-muted);
+}
+:root[data-skin="nothingos"] .os-topbar-pulse{
+  width:34px;height:5px;border-radius:2px;
+  background:linear-gradient(90deg,transparent 0 12%,var(--os-red) 12% 18%,var(--os-text) 18% 22%,transparent 22% 100%);
+  background-size:220% 100%;opacity:.85;animation:osSweep 2.4s var(--ease-os) infinite;
+}
+:root[data-skin="nothingos"] .os-topbar-state[data-state="idle"] .os-topbar-pulse{animation:none;opacity:.3;background:var(--os-line-strong);}
+:root[data-skin="nothingos"] .os-topbar-state[data-state="thinking"] .os-topbar-pulse{animation-duration:1.6s;}
+:root[data-skin="nothingos"] .os-topbar-state[data-state="tool_running"] .os-topbar-pulse{animation-duration:1s;}
+:root[data-skin="nothingos"] .os-topbar-state[data-state="waiting_approval"] .os-topbar-pulse{animation:osBreathe 1.4s var(--ease-os) infinite;background:var(--os-red);background-size:auto;}
+:root[data-skin="nothingos"] .os-topbar-state[data-state="error"]{color:var(--os-red);}
+:root[data-skin="nothingos"] .os-topbar-state[data-state="error"] .os-topbar-pulse{background:var(--os-red);background-size:auto;animation:osErrPulse 1.6s steps(1) 2 forwards;}
+:root[data-skin="nothingos"] .os-topbar-state[data-state="complete"] .os-topbar-pulse{animation:osSweep .7s var(--ease-os) 1 forwards;}
+@media (prefers-reduced-motion:reduce){:root[data-skin="nothingos"] .os-topbar-pulse{animation:none!important;}}
+/* Keep the OS identity tag first inside .app-titlebar-left (before the buttons). */
+:root[data-skin="nothingos"] .os-topbar-id{order:-1;}
+/* Mobile: hide the OS identity tag (space is tight; hamburger + title + state). */
+@media (max-width:767px){
+  :root[data-skin="nothingos"] .os-topbar-id{display:none;}
+  :root[data-skin="nothingos"] .app-titlebar{padding-left:8px!important;padding-right:8px!important;}
 }
 /* ── end NothingOS V4 ── */

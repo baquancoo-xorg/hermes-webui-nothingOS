@@ -130,6 +130,8 @@
     <button class="app-titlebar-hamburger has-tooltip has-tooltip--bottom" id="btnHamburger" onclick="toggleMobileSidebar()" type="button" data-tooltip="Menu" aria-label="Menu">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
   </button>
+    <!-- NothingOS V4: OS identity, merged into the single top status bar. -->
+    <span class="os-topbar-id" aria-hidden="true">HERMES OS / SINGLE SKIN</span>
   </div>
   <div class="app-titlebar-inner">
     <span class="app-titlebar-icon" aria-hidden="true">
@@ -147,6 +149,11 @@
     <span class="app-titlebar-sub" id="appTitlebarSub" hidden></span>
   </div>
   <div class="app-titlebar-spacer" aria-hidden="true"></div>
+  <!-- NothingOS V4: ambient agent state merged into the top bar (right side). -->
+  <div class="os-topbar-state" id="osTopbarState" data-state="idle" aria-hidden="true">
+    <span class="os-topbar-pulse" id="osTopbarPulse"></span>
+    <span class="os-topbar-statelabel" id="osTopbarStateLabel">IDLE</span>
+  </div>
   <button class="app-titlebar-new-chat" id="btnTitlebarNewChat" onclick="$('btnNewChat') && $('btnNewChat').click()" type="button" aria-label="New conversation" data-i18n-title="new_conversation" data-i18n-aria-label="new_conversation" title="New conversation">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16">
       <line x1="12" y1="5" x2="12" y2="19"/>
