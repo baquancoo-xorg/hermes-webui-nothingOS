@@ -1,21 +1,29 @@
 # Hermes WebUI — NothingOS Edition
 
-A **NothingOS-styled** web interface for [Hermes Agent](https://hermes-agent.nousresearch.com/) —
-dark monochrome, one red accent, dot-matrix identity, ambient status strip and a
-quick-command tray. Built on the stable [nesquena/hermes-webui](https://github.com/nesquena/hermes-webui)
-backend (Python + vanilla JS, no build step, no framework, no bundler).
+A **NothingOS-inspired** web interface for [Hermes Agent](https://hermes-agent.nousresearch.com/) —
+a dark monochrome **command surface**, not a recoloured chat app. One red accent
+used as a signal, dot-matrix identity, an ambient status strip that expresses
+agent state as light, and OS-style glance widgets. Built on the stable
+[nesquena/hermes-webui](https://github.com/nesquena/hermes-webui) backend
+(Python + vanilla JS — no build step, no framework, no bundler).
 
-![NothingOS WebUI — dark](assets/screenshots/nothingos-dark.png)
+![NothingOS WebUI — dark command surface](assets/screenshots/nothingos-dark.png)
 
 <table>
   <tr>
     <td width="50%" align="center">
-      <img alt="Dark theme" src="assets/screenshots/nothingos-dark.png" /><br />
-      <sub>Dark theme (default)</sub>
+      <img alt="Light theme" src="assets/screenshots/nothingos-light.png" /><br />
+      <sub>Light theme — same design language, inverted surfaces</sub>
     </td>
     <td width="50%" align="center">
-      <img alt="Light theme" src="assets/screenshots/nothingos-light.png" /><br />
-      <sub>Light theme</sub>
+      <img alt="Kanban route with collapsed Filters &amp; Dispatch" src="assets/screenshots/nothingos-kanban.png" /><br />
+      <sub>Kanban route — advanced filters collapse into a disclosure</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img alt="Mobile single-surface layout at 390px" src="assets/screenshots/nothingos-mobile.png" width="300" /><br />
+      <sub>Mobile — every route is a full-width single surface (390px, no overflow)</sub>
     </td>
   </tr>
 </table>
@@ -24,11 +32,24 @@ backend (Python + vanilla JS, no build step, no framework, no bundler).
 
 ## What's different in this edition
 
-- **One design language — NothingOS.** Dark monochrome surfaces, a single red
-  accent, dot-matrix texture, an **ambient status strip** (top) and a **quick
-  command tray** (bottom). The 16 legacy skins are removed.
-- **Light / Dark toggle.** A simple two-button switch in **Settings → Appearance**
-  (default **Dark**, your choice is remembered). No "System/auto" mode, no skins.
+- **One design language — NothingOS, rebuilt inside every surface.** Not a CSS
+  overlay on the old shell: the content, typography and interaction layer of each
+  route was rebuilt into an OS command surface. Three typography tiers (display /
+  body sans / technical mono), depth from borders and nesting (no drop shadows),
+  and a controlled dot-matrix identity.
+- **Red is a signal, not paint.** At most one primary red block per page; code
+  chips are neutral by default; a selected row shows a thin red index, never a
+  red wash.
+- **Ambient status strip.** The top strip expresses agent state as light —
+  idle, thinking (dot ripple), tool-running (segmented strip), waiting-approval
+  (red breathing), error, complete (white sweep) — instead of a noisy banner.
+- **Glance widgets.** Current run, model, pending approvals and next cron read
+  from live state in the workspace panel (feed-only — no extra API calls).
+- **Light / Dark toggle.** A two-button switch in **Settings → Appearance**
+  (default **Dark**, remembered). One skin only — no "System/auto", no legacy
+  skins, and old `skin`/`theme` values in your browser cannot change it back.
+- **Single-surface mobile.** At phone width every route is full width with no
+  horizontal overflow; filters and controls collapse into disclosures/sheets.
 - **Four extra features** carried over from the Tungbillee fork:
   - `GET /api/agent-configs` — inspect/edit agent model & memory config
   - `GET /api/dash/cost` — per-agent token cost
@@ -36,7 +57,7 @@ backend (Python + vanilla JS, no build step, no framework, no bundler).
   - `GET|POST /api/library/*` — per-team document library
 - **No React SPA, no `/v2` route** — `/` serves the static shell directly.
 - **Everything else** (chat, sessions, workspace browser, profiles, cron, skills,
-  memory, voice, mobile layout) comes from the stable upstream and works as-is.
+  memory, voice) comes from the stable upstream and works as-is.
 
 ---
 
