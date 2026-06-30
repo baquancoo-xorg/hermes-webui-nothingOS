@@ -69,6 +69,14 @@
   --dur-fast: 120ms;
   --dur-ui: 220ms;
   --dur-slow: 700ms;
+
+  /* 4.7 Status LED language (V3) — desaturated, never neon. Red stays signal-only.
+     ok = pale desaturated green (NOT saturated), warn = muted amber, off = faint.
+     --n-red-line = the thin red index/underline used for selected/critical cues. */
+  --n-led-ok: #c4ddc4;
+  --n-led-warn: #f1d36b;
+  --n-led-off: var(--os-faint);
+  --n-red-line: rgba(255, 59, 48, .44);
 }
 
 /* ── Light variant ──────────────────────────────────────────────────────────
@@ -103,4 +111,10 @@
     linear-gradient(180deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, .15)),
     var(--os-panel);
   --os-surface-inset: inset 0 1px 0 rgba(255, 255, 255, .6);
+
+  /* LED contrast tuned for light surfaces: darker fills so dots stay legible. */
+  --n-led-ok: #4f8a4f;
+  --n-led-warn: #b8860b;
+  --n-led-off: var(--os-faint);
+  --n-red-line: rgba(200, 30, 20, .5);
 }

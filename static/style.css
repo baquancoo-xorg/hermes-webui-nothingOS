@@ -5880,17 +5880,40 @@ html[data-conversation-outline="enabled"] #outlineToggleBtn:not([hidden]){displa
   :root[data-skin="nothingos"] #mainMemory .main-view-body,
   :root[data-skin="nothingos"] #mainSettings .settings-main{padding-bottom:calc(20px + env(safe-area-inset-bottom));}
   :root[data-skin="nothingos"] .memory-content{font-family:var(--font-ui);font-size:14px;line-height:1.7;overflow-wrap:anywhere;}
-  :root[data-skin="nothingos"] .kanban-filter-stack{position:relative;display:grid;grid-template-columns:1fr auto;align-items:start;gap:8px;padding:8px 10px;max-height:116px;overflow:auto;}
-  :root[data-skin="nothingos"] .kanban-filter-stack::before{content:"Filters";grid-column:1/-1;color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;}
-  :root[data-skin="nothingos"] .kanban-filter-stack select,
-  :root[data-skin="nothingos"] .kanban-filter-stack .kanban-check,
-  :root[data-skin="nothingos"] .kanban-filter-stack #kanbanBulkBar{font-size:11px;min-height:36px;}
-  :root[data-skin="nothingos"] .kanban-new-task-row{grid-column:1/-1;max-width:100%;overflow:hidden;}
+  /* Filter stack now holds: search · <details> advanced · new-task row. Stack
+     them in a single column so nothing clips at 390px; advanced filters stay
+     collapsed by default (the <details> handles disclosure, no ::before label). */
+  :root[data-skin="nothingos"] .kanban-filter-stack{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:8px 10px;max-height:none;overflow:visible;}
+  :root[data-skin="nothingos"] .kanban-adv-body select,
+  :root[data-skin="nothingos"] .kanban-adv-body .kanban-check{font-size:12px;min-height:38px;}
+  :root[data-skin="nothingos"] .kanban-adv-body #kanbanBulkBar{flex-wrap:wrap;gap:6px;}
+  :root[data-skin="nothingos"] .kanban-new-task-row{max-width:100%;overflow:hidden;}
   :root[data-skin="nothingos"] #kanbanNewTaskTitle{min-width:0;}
   :root[data-skin="nothingos"] .kanban-board-wrap{overflow:visible;}
   :root[data-skin="nothingos"] .kanban-board{display:grid;grid-template-columns:1fr;gap:10px;overflow:visible;padding:8px 10px 16px;}
   :root[data-skin="nothingos"] .kanban-column{min-width:0;width:100%;scroll-snap-align:none;}
   :root[data-skin="nothingos"] .kanban-card{box-shadow:none;}
+
+  /* ── Phase 6: V3 primitives at phone width (390px target) ────────────────── */
+  /* Empty-state: tighter padding, full-width suggestion rows. */
+  :root[data-skin="nothingos"] .empty-state{padding:32px 18px!important;}
+  :root[data-skin="nothingos"] .suggestion-grid{max-width:100%!important;}
+  /* Glance widgets: a single horizontal scroll row so they don't steal height
+     from the chat surface (spec §5: widgets collapse to horizontal scroll). */
+  :root[data-skin="nothingos"] .os-glance{
+    grid-auto-flow:column;grid-auto-columns:minmax(150px,1fr);overflow-x:auto;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  :root[data-skin="nothingos"] .os-glance::-webkit-scrollbar{display:none;}
+  /* Workspace segmented tabs + file rows stay full-width and tappable. */
+  :root[data-skin="nothingos"] .workspace-panel-tab{min-height:42px;}
+  :root[data-skin="nothingos"] .file-tree .file-item{min-height:46px;}
+  /* Memory reader: larger body for phone readability (brief §4.5: 18–22px). */
+  :root[data-skin="nothingos"] .memory-content{font-size:17px;line-height:1.7;}
+  /* Bottom sheet spans full width on phones. */
+  :root[data-skin="nothingos"] .os-sheet{border-radius:var(--os-radius-md) var(--os-radius-md) 0 0;}
+  /* Composer corner marker must not be clipped by the rounded composer edge. */
+  :root[data-skin="nothingos"] #composerBox:focus-within::after{top:0;right:0;}
 }
 
 /* ── NothingOS shell scaffold (V2 route-owned controls) ──────────────────────
@@ -5924,10 +5947,37 @@ html[data-conversation-outline="enabled"] #outlineToggleBtn:not([hidden]){displa
 }
 @keyframes osSweep{from{background-position:140% 0;}to{background-position:-40% 0;}}
 
-/* Ambient state machine (spec §6). data-state drives the pulse visual. */
+/* Ambient state machine (spec §6). data-state drives the pulse visual.
+   idle=dim line · thinking=center-out dot ripple · tool_running=segmented strip
+   · waiting_approval=red breathing · error=red pulse ×2 · complete=white sweep. */
 .os-ambient[data-state="idle"] .os-ambient-pulse{animation:none;opacity:.3;background:var(--os-line-strong);}
-.os-ambient[data-state="thinking"] .os-ambient-pulse{animation-duration:2.4s;}
-.os-ambient[data-state="tool_running"] .os-ambient-pulse{animation-duration:1.2s;}
+/* thinking — slow dot ripple radiating from center. A center-out mask gradient
+   sweeps via mask-position so the dots appear to ripple outward (opacity+mask,
+   no layout). */
+.os-ambient[data-state="thinking"] .os-ambient-pulse{
+  background:
+    radial-gradient(circle at center, var(--os-text) 1px, transparent 1.4px) center/10px 100% repeat-x;
+  background-size:10px 100%;
+  mask-image:radial-gradient(circle at center, #000 0 20%, rgba(0,0,0,.25) 60%, transparent 100%);
+  -webkit-mask-image:radial-gradient(circle at center, #000 0 20%, rgba(0,0,0,.25) 60%, transparent 100%);
+  mask-size:220% 100%;-webkit-mask-size:220% 100%;
+  animation:osRipple 1.6s var(--ease-os) infinite;
+}
+@keyframes osRipple{
+  0%{opacity:.3;mask-position:50% 0;-webkit-mask-position:50% 0;}
+  50%{opacity:.9;mask-position:0% 0;-webkit-mask-position:0% 0;}
+  100%{opacity:.3;mask-position:50% 0;-webkit-mask-position:50% 0;}
+}
+/* tool_running — fast segmented strip (glyph-like progress rhythm). */
+.os-ambient[data-state="tool_running"] .os-ambient-pulse{
+  background:repeating-linear-gradient(90deg,var(--os-text-soft) 0 8px,transparent 8px 16px);
+  background-size:32px 100%;animation:osSegScroll 1s linear infinite;opacity:.7;
+}
+@keyframes osSegScroll{from{background-position:0 0;}to{background-position:32px 0;}}
+@media (prefers-reduced-motion:reduce){
+  .os-ambient[data-state="thinking"] .os-ambient-pulse,
+  .os-ambient[data-state="tool_running"] .os-ambient-pulse{animation:none;opacity:.6;}
+}
 .os-ambient[data-state="waiting_approval"] .os-ambient-pulse{
   animation:osBreathe 1.4s var(--ease-os) infinite;
   background:var(--os-red);background-size:auto;border-radius:2px;
@@ -5975,7 +6025,9 @@ html[data-conversation-outline="enabled"] #outlineToggleBtn:not([hidden]){displa
 }
 .os-glance-widget h4{margin:0 0 10px;font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--os-muted);}
 .os-glance-metric{font-family:var(--font-mono);font-size:28px;line-height:.9;letter-spacing:-.04em;color:var(--os-text);}
+.os-glance-metric.hot{color:var(--os-red);}
 .os-glance-sub{margin-top:8px;font-size:11px;color:var(--os-muted);}
+.os-glance-metric.n-display{letter-spacing:.04em;}
 
 /* Responsive: ambient collapses to pulse-only, quick tray reflows (spec §5). */
 @media (max-width:1100px){
@@ -5995,3 +6047,405 @@ html[data-conversation-outline="enabled"] #outlineToggleBtn:not([hidden]){displa
   .os-quick-tile{flex:0 0 auto;min-width:104px;min-height:52px;scroll-snap-align:start;}
   .os-ambient{padding:0 10px;}
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ── NothingOS V3 primitives ──
+   Shared OS toolbox reused by every route. Appended at END so the cascade wins
+   over legacy rules without !important. All theme-aware via --os-* tokens
+   (dark :root + .light parity already defined in tokens.css). Depth from
+   borders + nesting, NOT drop shadow. Red is signal-only.
+   Namespaces: typography = .n-*, structural = .os-*.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Typography tiers ─────────────────────────────────────────────────────────
+   .n-display  → identity / labels / counters ONLY (uppercase dot-display feel).
+   .n-technical→ paths / branch / model / cron / timestamps ONLY (tabular mono).
+   Body copy stays the default UI sans — never apply these to paragraphs. */
+.n-display{
+  font-family:var(--font-dot);font-weight:700;text-transform:uppercase;
+  letter-spacing:.18em;line-height:1;color:var(--os-text);
+}
+.n-technical{
+  font-family:var(--font-mono);font-variant-numeric:tabular-nums;
+  letter-spacing:.01em;color:var(--os-text-soft);
+}
+
+/* Dot-matrix display mark — CSS-only (no licensed font). The text stays for
+   a11y; .n-dot-mark renders it as a perforated/dotted display via background
+   clip so identity reads "dot-matrix" without shipping an NDot font. */
+.n-dot-mark{
+  font-family:var(--font-dot);font-weight:800;text-transform:uppercase;
+  letter-spacing:.16em;line-height:.92;color:var(--os-text);
+  background-image:radial-gradient(circle, rgba(0,0,0,.34) 1.1px, transparent 1.2px);
+  background-size:4px 4px;background-clip:text;-webkit-background-clip:text;
+}
+:root.light .n-dot-mark{background-image:radial-gradient(circle, rgba(255,255,255,.5) 1.1px, transparent 1.2px);}
+
+/* ── Surface + dot texture ────────────────────────────────────────────────────
+   .os-surface = gradient + 1px line + inset highlight. .os-dot-grid adds the
+   masked, low-opacity radial dot field via ::before (pseudo only, no animation,
+   pointer-events:none, opacity <.28 — spec §4.5). */
+.os-surface{
+  position:relative;background:var(--os-surface-bg);
+  border:1px solid var(--os-line);box-shadow:var(--os-surface-inset);
+  border-radius:var(--os-radius-sm);
+}
+.os-dot-grid{position:relative;}
+.os-dot-grid::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:var(--os-dot-grid);background-size:var(--os-dot-size) var(--os-dot-size);
+  opacity:.16;mask-image:linear-gradient(135deg,#000,transparent 68%);
+  -webkit-mask-image:linear-gradient(135deg,#000,transparent 68%);
+}
+.os-dot-grid > *{position:relative;z-index:1;}
+
+/* ── Status LED language ──────────────────────────────────────────────────────
+   Base .os-led already exists above (mono label + dot). V3 extends it with the
+   desaturated token palette + blocked(breathing red) + off, per spec §6.
+   Never saturated green; red breathing reserved for blocked/critical. */
+.os-led.ok::before{background:var(--n-led-ok);box-shadow:0 0 0 1px var(--os-line-strong);}
+.os-led.warn::before{background:var(--n-led-warn);box-shadow:0 0 0 1px var(--os-line-strong);}
+.os-led.off::before{background:var(--n-led-off);}
+.os-led.blocked::before{
+  background:var(--os-red);box-shadow:0 0 0 1px var(--os-red-soft);
+  animation:osLedBreathe 1.6s var(--ease-os) infinite;
+}
+@keyframes osLedBreathe{0%,100%{opacity:.45;}50%{opacity:1;}}
+@media (prefers-reduced-motion:reduce){.os-led.blocked::before{animation:none;opacity:1;}}
+
+/* ── Segmented progress strip ─────────────────────────────────────────────────
+   Tool-running / glyph-like rhythm. Indeterminate slider by default; add
+   [data-progress] inline width for determinate. */
+.os-seg{
+  position:relative;height:6px;border-radius:2px;overflow:hidden;
+  background:var(--os-fill);border:1px solid var(--os-line);
+}
+.os-seg::after{
+  content:"";position:absolute;inset:0 auto 0 0;width:34%;background:var(--os-red);
+  animation:osSegSlide 1.8s var(--ease-os) infinite;
+}
+.os-seg.done::after{width:100%;animation:none;background:var(--os-text-soft);}
+.os-seg.idle::after{display:none;}
+@keyframes osSegSlide{0%{transform:translateX(-110%);}100%{transform:translateX(330%);}}
+@media (prefers-reduced-motion:reduce){.os-seg::after{animation:none;width:100%;opacity:.4;}}
+
+/* ── Mechanical dotted divider ────────────────────────────────────────────────
+   Replaces raw "§" separators. Optional centered label via data-label. */
+.os-divider{
+  display:flex;align-items:center;gap:10px;margin:18px 0;
+  color:var(--os-faint);font-family:var(--font-mono);font-size:10px;
+  letter-spacing:.2em;text-transform:uppercase;
+}
+.os-divider::before,.os-divider::after{
+  content:"";flex:1;height:0;
+  border-top:1px dotted var(--os-line-strong);
+}
+.os-divider[data-label]::before{flex:0 0 24px;}
+
+/* ── OS list row ──────────────────────────────────────────────────────────────
+   48–56px touch-safe row: [dot/label] [title + .n-technical meta] [LED/action].
+   Used by workspace files, skills, profiles, todos, log rows. */
+.os-row{
+  display:flex;align-items:center;gap:12px;min-height:50px;
+  padding:8px 14px;background:var(--os-fill);border:1px solid var(--os-line);
+  border-radius:var(--os-radius-sm);color:var(--os-text);cursor:pointer;
+  transition:border-color var(--dur-ui) var(--ease-os),background var(--dur-ui) var(--ease-os),transform var(--dur-fast) var(--ease-os);
+}
+.os-row:hover{border-color:var(--os-line-strong);background:var(--os-fill-hover);}
+.os-row:active{transform:translateY(1px);}
+.os-row.selected{border-color:var(--os-line-strong);}
+.os-row.selected::before{
+  content:"";align-self:stretch;width:3px;margin:-8px 0 -8px -14px;
+  background:var(--n-red-line);border-radius:2px 0 0 2px;flex-shrink:0;
+}
+.os-row-main{flex:1;min-width:0;display:grid;gap:3px;}
+.os-row-title{font-size:13px;color:var(--os-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.os-row-meta{font-family:var(--font-mono);font-size:11px;color:var(--os-muted);overflow-wrap:anywhere;}
+
+/* ── OS card ──────────────────────────────────────────────────────────────────
+   Card anatomy: top row (dot label + LED), title, metadata, actions revealed on
+   hover or [data-expanded]. Built on .os-surface depth. */
+.os-card{
+  display:grid;gap:10px;padding:14px;background:var(--os-surface-bg);
+  border:1px solid var(--os-line);border-radius:var(--os-radius-sm);
+  box-shadow:var(--os-surface-inset);
+}
+.os-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.os-card-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--os-muted);}
+.os-card-title{font-size:15px;letter-spacing:-.01em;color:var(--os-text);}
+.os-card-meta{display:grid;gap:4px;font-family:var(--font-mono);font-size:11px;color:var(--os-muted);}
+.os-card-actions{display:flex;gap:8px;opacity:0;max-height:0;overflow:hidden;transition:opacity var(--dur-ui) var(--ease-os);}
+.os-card:hover .os-card-actions,.os-card[data-expanded] .os-card-actions{opacity:1;max-height:120px;}
+
+/* ── Segmented control ────────────────────────────────────────────────────────
+   Equal zones; selected zone marked by a thin red underline only (no fill). */
+.os-segmented{
+  display:grid;grid-auto-flow:column;grid-auto-columns:1fr;
+  border:1px solid var(--os-line);border-radius:var(--os-radius-sm);overflow:hidden;
+  background:var(--os-fill);
+}
+.os-segmented > button,.os-segmented > .os-seg-zone{
+  position:relative;min-height:40px;padding:8px 12px;border:0;cursor:pointer;
+  background:transparent;color:var(--os-muted);font-family:var(--font-mono);
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  transition:color var(--dur-ui) var(--ease-os),background var(--dur-ui) var(--ease-os);
+}
+.os-segmented > button + button,.os-segmented > .os-seg-zone + .os-seg-zone{border-left:1px solid var(--os-line);}
+.os-segmented > button:hover{color:var(--os-text-soft);background:var(--os-fill-hover);}
+.os-segmented > button.active,.os-segmented > .os-seg-zone.active{color:var(--os-text);}
+.os-segmented > button.active::after,.os-segmented > .os-seg-zone.active::after{
+  content:"";position:absolute;left:12px;right:12px;bottom:0;height:2px;background:var(--n-red-line);
+}
+
+/* ── Bottom sheet (mobile) ────────────────────────────────────────────────────
+   Fixed-bottom container for collapsed filters/controls. Hidden via [hidden];
+   slides up via transform. Safe-area aware. */
+.os-sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;
+  background:var(--os-surface-bg);border-top:1px solid var(--os-line-strong);
+  border-radius:var(--os-radius-md) var(--os-radius-md) 0 0;
+  box-shadow:0 -1px 0 var(--os-line),var(--os-surface-inset);
+  padding:14px 16px calc(16px + env(safe-area-inset-bottom));
+  transform:translateY(0);transition:transform var(--dur-ui) var(--ease-os);
+}
+.os-sheet[hidden]{display:block!important;transform:translateY(110%);pointer-events:none;}
+.os-sheet-grip{width:36px;height:4px;border-radius:2px;background:var(--os-line-strong);margin:0 auto 12px;}
+.os-sheet-backdrop{position:fixed;inset:0;z-index:59;background:rgba(0,0,0,.5);}
+.os-sheet-backdrop[hidden]{display:none;}
+
+/* ── Dot-sweep loader ─────────────────────────────────────────────────────────
+   Replaces generic spinners. Three dots sweeping opacity in sequence. */
+.os-loader-dots{display:inline-flex;gap:6px;align-items:center;}
+.os-loader-dots > i{
+  width:6px;height:6px;border-radius:50%;background:var(--os-text-soft);opacity:.3;
+  animation:osDotSweep 1.1s var(--ease-os) infinite;
+}
+.os-loader-dots > i:nth-child(2){animation-delay:.15s;}
+.os-loader-dots > i:nth-child(3){animation-delay:.3s;}
+@keyframes osDotSweep{0%,60%,100%{opacity:.25;}30%{opacity:1;}}
+@media (prefers-reduced-motion:reduce){.os-loader-dots > i{animation:none;opacity:.6;}}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ── Phase 3: Chat anchor surface ──
+   Empty-state as OS surface, message treatment, tool-call module, composer.
+   Scoped under [data-skin="nothingos"] (skin is locked on, theme = light/dark).
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Empty-state — OS surface, not a SaaS card. Dot-H mark + display line + rows. */
+:root[data-skin="nothingos"] .empty-state{
+  background:none!important;border:none!important;box-shadow:none!important;
+  gap:14px;padding:48px 32px;
+}
+:root[data-skin="nothingos"] .empty-eyebrow{
+  font-size:10px;letter-spacing:.26em;color:var(--os-muted);margin-bottom:2px;
+}
+:root[data-skin="nothingos"] .empty-state h2{
+  font-size:clamp(22px,3vw,30px);letter-spacing:.05em;color:var(--os-text);font-weight:700;
+}
+:root[data-skin="nothingos"] .empty-state p{color:var(--os-muted);max-width:340px;}
+/* Suggestions ride the .os-row primitive; kill the legacy pill look + transform. */
+:root[data-skin="nothingos"] .suggestion-grid{gap:8px;max-width:420px;}
+:root[data-skin="nothingos"] .suggestion.os-row{
+  background:var(--os-fill)!important;border:1px solid var(--os-line)!important;
+  border-radius:var(--os-radius-sm)!important;color:var(--os-text-soft)!important;
+  font-size:13px;gap:10px;
+}
+:root[data-skin="nothingos"] .suggestion.os-row:hover{
+  background:var(--os-fill-hover)!important;border-color:var(--os-line-strong)!important;
+  color:var(--os-text)!important;transform:none!important;
+}
+:root[data-skin="nothingos"] .suggestion.os-row svg{color:var(--os-muted);flex-shrink:0;}
+
+/* Message treatment (user raised-right / assistant less-boxed) is already
+   handled by the .msg-row[data-role=...] rules earlier in this skin block.
+   Phase 3 refines assistant to "less boxed" — drop the heavy border. */
+:root[data-skin="nothingos"] .msg-row[data-role="assistant"] .msg-body{
+  border-color:var(--os-line);
+}
+
+/* Composer — command-line feel: focus = white border + red corner marker, no
+   glow, no dot texture behind text. Chip discipline handled below. */
+:root[data-skin="nothingos"] #composerBox{position:relative;}
+:root[data-skin="nothingos"] #composerBox:focus-within{
+  border-color:var(--os-text-soft)!important;box-shadow:none!important;
+}
+:root[data-skin="nothingos"] #composerBox:focus-within::after{
+  content:"";position:absolute;top:-1px;right:-1px;width:9px;height:9px;
+  border-top:2px solid var(--os-red);border-right:2px solid var(--os-red);
+  pointer-events:none;
+}
+
+/* Composer chips — Validation S1 decision 4: keep as-is, minimal touch.
+   ONLY neutral-default / red-when-active + typography tier. No relocation. */
+:root[data-skin="nothingos"] .composer-model-chip,
+:root[data-skin="nothingos"] #profileChip,
+:root[data-skin="nothingos"] #composerWorkspaceChip,
+:root[data-skin="nothingos"] #composerToolsetsChip{
+  font-family:var(--font-mono);letter-spacing:.04em;
+  border-color:var(--os-line);color:var(--os-muted);background:var(--os-fill);
+}
+:root[data-skin="nothingos"] .composer-model-chip:hover,
+:root[data-skin="nothingos"] #profileChip:hover,
+:root[data-skin="nothingos"] #composerWorkspaceChip:hover,
+:root[data-skin="nothingos"] #composerToolsetsChip:hover{
+  border-color:var(--os-line-strong);color:var(--os-text-soft);background:var(--os-fill-hover);
+}
+/* Active = thin red index only, never a filled red pill. */
+:root[data-skin="nothingos"] .composer-model-chip.active,
+:root[data-skin="nothingos"] #profileChip.active,
+:root[data-skin="nothingos"] #composerWorkspaceChip.active,
+:root[data-skin="nothingos"] #composerToolsetsChip.active{
+  color:var(--os-text);border-color:var(--n-red-line);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ── Phase 4: Content rebuild — Cron · Kanban · Memory · Workspaces ──
+   Cron card anatomy + Memory chip neutrality were largely set in V2; this phase
+   adds the missing material: tactile file rows, segmented Files/Artifacts,
+   readable memory body + dotted dividers, collapsible kanban dispatch controls.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Workspaces: Files/Artifacts as an equal-zone segmented control ─────────── */
+:root[data-skin="nothingos"] .workspace-panel-tabs{
+  gap:0;padding:8px 10px;border-bottom:1px solid var(--os-line);
+}
+:root[data-skin="nothingos"] .workspace-panel-tab{
+  position:relative;border:1px solid var(--os-line);border-radius:0;background:var(--os-fill);
+  color:var(--os-muted);font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;min-height:38px;
+}
+:root[data-skin="nothingos"] .workspace-panel-tab + .workspace-panel-tab{border-left:0;}
+:root[data-skin="nothingos"] .workspace-panel-tab:first-child{border-radius:var(--os-radius-sm) 0 0 var(--os-radius-sm);}
+:root[data-skin="nothingos"] .workspace-panel-tab:last-child{border-radius:0 var(--os-radius-sm) var(--os-radius-sm) 0;}
+:root[data-skin="nothingos"] .workspace-panel-tab:hover{color:var(--os-text-soft);background:var(--os-fill-hover);}
+:root[data-skin="nothingos"] .workspace-panel-tab.active{
+  color:var(--os-text);background:var(--os-fill);
+}
+:root[data-skin="nothingos"] .workspace-panel-tab.active::after{
+  content:"";position:absolute;left:10px;right:10px;bottom:0;height:2px;background:var(--n-red-line);
+}
+
+/* ── Workspaces: tactile 48px file rows (was a 6px-pad dense list) ──────────── */
+:root[data-skin="nothingos"] .file-tree .file-item{
+  min-height:44px;padding:8px 12px;border-radius:var(--os-radius-sm);
+  border:1px solid transparent;font-size:13px;gap:10px;
+}
+:root[data-skin="nothingos"] .file-tree .file-item:hover{
+  background:var(--os-fill-hover);border-color:var(--os-line);color:var(--os-text);
+}
+:root[data-skin="nothingos"] .file-tree .file-item.active{
+  background:var(--os-fill);border-color:var(--os-line-strong);color:var(--os-text);
+}
+/* Breadcrumb as a mono path chip. */
+:root[data-skin="nothingos"] .breadcrumb-bar{font-family:var(--font-mono);font-size:11px;}
+:root[data-skin="nothingos"] .breadcrumb-seg{color:var(--os-muted);}
+:root[data-skin="nothingos"] .breadcrumb-current{color:var(--os-text);}
+
+/* ── Memory: readable body, neutral chips, dotted § dividers, long-path wrap ── */
+:root[data-skin="nothingos"] .memory-content{font-size:15px;line-height:1.72;}
+:root[data-skin="nothingos"] .memory-content code{
+  color:var(--os-text-soft)!important;background:var(--os-fill)!important;
+  border:1px solid var(--os-line)!important;border-radius:5px;
+  overflow-wrap:anywhere;box-decoration-break:clone;-webkit-box-decoration-break:clone;
+}
+/* Heading hierarchy: Memory(module) vs MEMORY.md(file) read distinctly. */
+:root[data-skin="nothingos"] .memory-content h1,
+:root[data-skin="nothingos"] .memory-content h2{
+  font-family:var(--font-ui)!important;color:var(--os-text)!important;letter-spacing:-.01em;
+}
+:root[data-skin="nothingos"] .memory-content h3{color:var(--os-text-soft)!important;}
+/* Standalone "§"-style hr → mechanical dotted divider. */
+:root[data-skin="nothingos"] .memory-content hr{
+  border:0;border-top:1px dotted var(--os-line-strong);margin:18px 0;
+}
+:root[data-skin="nothingos"] .memory-detail-mtime{
+  font-family:var(--font-mono);font-size:11px;color:var(--os-muted);overflow-wrap:anywhere;
+}
+
+/* ── Kanban: collapsible advanced filters/dispatch (cards reach 1st viewport) ─ */
+:root[data-skin="nothingos"] .kanban-adv{
+  border:1px solid var(--os-line);border-radius:var(--os-radius-sm);background:var(--os-fill);
+}
+:root[data-skin="nothingos"] .kanban-adv-summary{
+  list-style:none;cursor:pointer;padding:9px 12px;min-height:40px;display:flex;align-items:center;gap:8px;
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--os-muted);
+}
+:root[data-skin="nothingos"] .kanban-adv-summary::-webkit-details-marker{display:none;}
+:root[data-skin="nothingos"] .kanban-adv-summary::before{
+  content:"▸";color:var(--os-faint);transition:transform var(--dur-fast) var(--ease-os);
+}
+:root[data-skin="nothingos"] .kanban-adv[open] .kanban-adv-summary::before{transform:rotate(90deg);}
+:root[data-skin="nothingos"] .kanban-adv-summary:hover{color:var(--os-text-soft);}
+:root[data-skin="nothingos"] .kanban-adv-body{
+  display:grid;gap:8px;padding:4px 12px 12px;
+}
+:root[data-skin="nothingos"] .kanban-adv-body select,
+:root[data-skin="nothingos"] .kanban-adv-body .kanban-check{min-height:36px;font-size:12px;}
+/* Red only for the dispatcher run action + blocked lane, never the whole row. */
+:root[data-skin="nothingos"] .kanban-run-dispatch-btn{
+  border:1px solid var(--os-red)!important;background:var(--os-red)!important;color:#fff!important;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ── Phase 5: Secondary routes — Settings · Skills · Profiles · Todos · Insights · Logs ──
+   Apply shared primitives + red discipline. In this skin --accent maps to red,
+   so legacy .active rules paint a full red block (red overload). Re-point each
+   route's active state to a NEUTRAL fill + thin red index. Behavior untouched.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Settings: font-size as a 2×2 grid + thin red selection (no nested red box) */
+:root[data-skin="nothingos"] #fontSizePickerGrid{grid-template-columns:repeat(2,1fr)!important;}
+:root[data-skin="nothingos"] #mainSettings .font-size-pick-btn{
+  border-radius:var(--os-radius-sm)!important;border-color:var(--os-line)!important;background:var(--os-fill)!important;
+}
+:root[data-skin="nothingos"] #mainSettings .font-size-pick-btn:hover{
+  border-color:var(--os-line-strong)!important;background:var(--os-fill-hover)!important;
+}
+:root[data-skin="nothingos"] #mainSettings .font-size-pick-btn.active{
+  border-color:var(--n-red-line)!important;box-shadow:none!important;background:var(--os-fill)!important;
+}
+/* Settings field with an inline checkbox → grouped row, switch pushed right. */
+:root[data-skin="nothingos"] #mainSettings .settings-field > label[style*="display:flex"]{
+  justify-content:space-between;gap:14px;min-height:28px;align-items:center;
+}
+
+/* ── Skills / Profiles / Workspaces rows: neutral active fill + left red index ─ */
+:root[data-skin="nothingos"] .skill-item.active,
+:root[data-skin="nothingos"] .profile-card.active,
+:root[data-skin="nothingos"] .ws-row.active{
+  background:var(--os-fill)!important;border-color:var(--os-line-strong)!important;color:var(--os-text)!important;
+}
+:root[data-skin="nothingos"] .profile-card.active{position:relative;}
+:root[data-skin="nothingos"] .skill-item.active{position:relative;}
+:root[data-skin="nothingos"] .profile-card.active::before,
+:root[data-skin="nothingos"] .skill-item.active::before{
+  content:"";position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:2px;background:var(--n-red-line);
+}
+:root[data-skin="nothingos"] .profile-card.active .profile-card-name,
+:root[data-skin="nothingos"] .profile-card.active .profile-card-meta{color:var(--os-text)!important;opacity:1;}
+
+/* ── Insights: wrap chart panels in OS surface (chart logic untouched) ──────── */
+:root[data-skin="nothingos"] #mainInsights .insights-card{
+  background:var(--os-surface-bg)!important;border:1px solid var(--os-line)!important;
+  border-radius:var(--os-radius-sm)!important;box-shadow:var(--os-surface-inset)!important;
+}
+:root[data-skin="nothingos"] #mainInsights .insights-card-title{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--os-muted);
+}
+
+/* ── Logs: mono rows, severity as a left LED bar — not a full-row red wash ──── */
+:root[data-skin="nothingos"] #logsOutput .log-line{
+  font-family:var(--font-mono)!important;font-size:12px;color:var(--os-text-soft);
+}
+:root[data-skin="nothingos"] #logsOutput .log-line-error{
+  background:transparent!important;color:var(--os-text-soft)!important;
+  border-left:2px solid var(--os-red)!important;padding-left:8px;
+}
+:root[data-skin="nothingos"] #logsOutput .log-line-warning{
+  border-left:2px solid var(--n-led-warn)!important;padding-left:8px;
+}
+:root[data-skin="nothingos"] #logsOutput .log-line-info{
+  border-left:2px solid var(--os-line-strong)!important;padding-left:8px;
+}
+:root[data-skin="nothingos"] #logsOutput .log-line-debug{color:var(--os-muted);}
+/* ── end NothingOS V3 primitives ── */

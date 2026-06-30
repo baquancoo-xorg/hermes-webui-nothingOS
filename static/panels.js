@@ -596,7 +596,7 @@ async function loadCrons(animate) {
       if (scheduleLabel) metaParts.push(scheduleLabel);
       if (nextLabel) metaParts.push(`${t('cron_next') || 'Next'} ${nextLabel}`);
       if (lastLabel) metaParts.push(`${t('cron_last') || 'Last'} ${lastLabel}`);
-      const metaHtml = metaParts.length ? `<div class="cron-card-meta">${esc(metaParts.join(' · '))}</div>` : '';
+      const metaHtml = metaParts.length ? `<div class="cron-card-meta" data-next="${esc(nextLabel || '')}">${esc(metaParts.join(' · '))}</div>` : '';
       item.innerHTML = `
         <div class="cron-header">
           ${isNewRun ? '<span class="cron-new-dot" title="New run"></span>' : ''}

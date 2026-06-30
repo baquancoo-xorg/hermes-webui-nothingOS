@@ -51,12 +51,18 @@
     g.className = 'os-glance';
     g.id = 'osGlance';
     g.innerHTML =
-      '<div class="os-glance-widget"><h4>Current run</h4>' +
-        '<div class="os-glance-metric" id="osGlanceTurns">00</div>' +
-        '<div class="os-glance-sub" id="osGlanceRunSub">idle</div></div>' +
-      '<div class="os-glance-widget"><h4>Memory mode</h4>' +
-        '<div class="os-glance-metric" id="osGlanceModel" style="font-size:18px">—</div>' +
-        '<div class="os-glance-sub" id="osGlanceBranch">no branch</div></div>';
+      '<div class="os-glance-widget"><h4 class="n-display">Current run</h4>' +
+        '<div class="os-glance-metric n-display" id="osGlanceTurns">00</div>' +
+        '<div class="os-glance-sub n-technical" id="osGlanceRunSub">idle</div></div>' +
+      '<div class="os-glance-widget"><h4 class="n-display">Model</h4>' +
+        '<div class="os-glance-metric n-technical" id="osGlanceModel" style="font-size:16px">—</div>' +
+        '<div class="os-glance-sub n-technical" id="osGlanceBranch">no branch</div></div>' +
+      '<div class="os-glance-widget"><h4 class="n-display">Approvals</h4>' +
+        '<div class="os-glance-metric n-display" id="osGlanceApprovals">0</div>' +
+        '<div class="os-glance-sub n-technical" id="osGlanceApprovalsSub">none pending</div></div>' +
+      '<div class="os-glance-widget"><h4 class="n-display">Cron</h4>' +
+        '<div class="os-glance-metric n-technical" id="osGlanceCron" style="font-size:14px">—</div>' +
+        '<div class="os-glance-sub n-technical" id="osGlanceCronSub">next run</div></div>';
     // Insert after the panel header so resize handle + actions keep working.
     var header = host.querySelector('.panel-header');
     if (header && header.nextSibling) host.insertBefore(g, header.nextSibling);
@@ -93,6 +99,35 @@
       var badge = $('gitBadge');
       var txt = badge && badge.style.display !== 'none' ? (badge.textContent || '').trim() : '';
       branchEl.textContent = txt || 'no branch';
+    }
+
+    // Approvals — count visible approval cards already in the DOM (feed-only).
+    var apprEl = $('osGlanceApprovals');
+    var apprSub = $('osGlanceApprovalsSub');
+    if (apprEl) {
+      var pending = 0;
+      try { pending = document.querySelectorAll('.approval-card.visible').length; } catch (e) {}
+      // Only one approval surface (#approvalCard) exists, so this is a binary
+      // state, not a count — render a signal glyph rather than a fake counter.
+      apprEl.textContent = pending > 0 ? '●' : '—';
+      apprEl.classList.toggle('hot', pending > 0);
+      if (apprSub) apprSub.textContent = pending > 0 ? 'awaiting you' : 'none pending';
+    }
+
+    // Cron — read the next-run from the first rendered cron item if the route
+    // has been visited; never fetch. Falls back to "—" when unloaded.
+    var cronEl = $('osGlanceCron');
+    var cronSub = $('osGlanceCronSub');
+    if (cronEl) {
+      var nextTxt = '';
+      try {
+        // Read the structured next-run stamp (locale-safe) rather than regexing
+        // the rendered, translated meta string.
+        var meta = document.querySelector('#cronList .cron-card-meta[data-next]');
+        if (meta) nextTxt = (meta.getAttribute('data-next') || '').trim();
+      } catch (e) {}
+      cronEl.textContent = nextTxt || '—';
+      if (cronSub) cronSub.textContent = nextTxt ? 'next run' : 'open cron route';
     }
   }
   window.osRenderGlance = renderGlance;
