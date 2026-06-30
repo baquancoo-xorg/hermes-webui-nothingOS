@@ -5803,11 +5803,18 @@ html[data-conversation-outline="enabled"] #outlineToggleBtn:not([hidden]){displa
 :root[data-skin="nothingos"] .session-item.active::before{content:"";position:absolute;left:8px;top:12px;bottom:12px;width:3px;background:var(--os-red);box-shadow:none;}
 :root[data-skin="nothingos"] .session-lineage-count{border:1px solid var(--os-line)!important;border-radius:var(--os-radius-sm)!important;background:var(--os-bg-2)!important;color:var(--os-muted)!important;}
 
+/* Drop the hairline above the composer dock: it read as a stray horizontal rule
+   separating the input from the chat column. The ::before scroll-fade already
+   marks the boundary softly; the composer-box border frames the input itself. */
+:root[data-skin="nothingos"] .composer-wrap{border-top:0!important;}
+
 /* Composer: command-line feel. Focus = white border + red corner marker, NOT a
    glow (spec §6 Composer). No dot texture behind the input. */
 :root[data-skin="nothingos"] .composer-box{
   position:relative;
-  border:1px solid var(--os-line-strong)!important;border-radius:var(--os-radius-md)!important;background:var(--os-bg-2)!important;box-shadow:var(--os-surface-inset)!important;
+  /* Transparent so the input sits flush on the chat column surface — no grey
+     fill that read as a separate floating block (was --os-bg-2). */
+  border:1px solid var(--os-line-strong)!important;border-radius:var(--os-radius-md)!important;background:transparent!important;box-shadow:var(--os-surface-inset)!important;
 }
 :root[data-skin="nothingos"] .composer-box:focus-within{border-color:var(--os-text)!important;box-shadow:var(--os-surface-inset)!important;}
 :root[data-skin="nothingos"] .composer-box:focus-within::after{content:"";position:absolute;top:0;right:0;width:10px;height:10px;border-top:2px solid var(--os-red);border-right:2px solid var(--os-red);pointer-events:none;}
